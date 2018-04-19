@@ -1,0 +1,291 @@
+ulimit -n  1024 65535 /etc/security/limits.conf  文件描述符数量
+
+开机启动顺序：
+1. BIOS加电自检：检测硬件设备。然后按照cmos上面的顺序来搜索处在活动状态下的可以引导的设备。可以是光驱、软盘、USB等。
+2.加载主引导加载程序（MBR）：主引导程序的任务就是查找并且加载处在硬盘分区上的次引导程序。通过分区表查找活动分区，并将处在活动分区的次引导加载程序读取到内存里面运行。
+3.加载次引导记载程序（GRUB）：次引导加载程序加载linux内核
+4.linux内核映像：用户选择要加载的内核之后，次引导加载程序（GRUB）就会根据/boot/grub.conf配置文件中所设置的信息，从/boot/所在的分区上读取Linux内核映像，然后把内核映像加载到内存中并把控制权交给Linux内核。
+linux内核获得控制权之后开始干自己的事:
+1、  检测硬件
+2、  解压缩自己并安装必要驱动
+3、  初始化与文件系统相关的虚拟设备，LVM或RAID
+4、  装载根文件系统，挂在根目录下面
+5、  完成之后，linux在进程空间里面加载init程序，下面轮到init干活
+
+5、  init进程
+init是所有进程的发起者和控制者，所有的进程都由此衍生。
+init进程获得控制权之后，它会读取/etc/inittab 执行/etc/rc.d/rc.sysinit脚本，根据里面的代码设置环境变量、网络、启动swap、检查并挂载文件系统、执行其他初始化工作。
+
+Linux有如下运行级别：
+0-系统停机状态
+1-单用户工作状态
+2 – 多用户状态（没有NFS）
+3 – 多用户状态（有NFS）
+Redhat的默认运行级
+4 – 系统未使用，留给用户，一般在系统出现故障时使用
+5 – X11控制台（xdm，gdm或kdm）
+6 – 系统正常关闭并重新启动
+Linux最常用的运行级别是3 (linux系统启动后进入字符模式就是此运行级别) 和5(linux系统启动后进入图形模式是允许级别5)
+
+
+开启ssh服务：
+1. 首先使用netstat命令来判断是否已经启动了ssh服务, ssh服务的缺省端口号是22
+2. 如果没有安装ssh服务，可以通过执行$ sudo apt-get install openssh-server 来进行安装
+3. 通过一个客户端机器执行$ssh yourname@yourhost来判断是否能够进行ssh访问
+
+为某个操作添加别名：
+/etc/bashrc
+
+alias rm ='rm -i'
+alias rm ='cp -i'
+alias rm ='mv -i'
+
+alias l=’ls -l’
+alias cd..=’cd ..’
+alias utar=’tar xvfz’ #解 *.tar.gz 文件
+alias inforpm=’rpm -qpi’ #显示rpm包的信息
+alias instrpm=’rpm -Uhv’ #安装rpm包
+alias listrpm=’rpm -qpl’ #列rpm包内的文件
+alias uistrpm=’rpm -e’ #反安装rpm包
+
+linux如何压缩可执行文件：
+gzexe  压缩率超过50%
+
+gzexe gawk
+
+shell面试题：
+用Shell Script写一段代码 把一个目录下所有以ks开头的文件夹取出，保存到dirlist.txt文件中，
+然后遍历文件中的文件夹路径，在每个文件夹目录中执行一句任何命令。
+#!/bin/bash
+find /apps/build/jobs/workspace -maxdepth 2 -name "ks*" -type d > dirlist.txt
+
+for DIR in $(<dirlist.txt);
+do
+  cd $DIR
+  echo hello
+done
+
+利用cmp命令比较文件：
+cmp命令会显示两个文件第一次数据不同的位置。若两个文件内容相同，则不显示任何信息。
+cmp  [-ls] 文件名1 文件名2
+
+-l显示每个不同之处不同字节的内容
+-s只显示cmp命令的返回值（相同为0，不相同为1） 举例
+
+cmp temp1 temp2比较temp1和temp2两个文件的内容
+
+write命令干吗的？
+write destination-user [terminal]
+发送信息给另外一个用户
+
+如何利用find命令查找文件：
+-name 指定要被寻找的文件或目录名称  如：“*.c” 
+-size n 寻找占用n个block的文件
+-type x 以文件类型作为寻找条件
+文件类型如下：
+d — 目录(directory),    
+f — 文件(file),
+b — 块(block),         
+c — 字符(character)，
+p — 管道(pipe)
+-user user寻找属于user所拥有的文件，
+-group group寻找用户组为group的所有文件
+-links n寻找链接数等于n的所有文件
+-atim n寻找n天之前曾被存取的文件
+-mtime n寻找n天之前曾被修改的文件
+-exec command {}\;用寻找到的文件作为执行command的对象
+
+{}内存欲执行command时所需的参数条件的逻辑运算符：
+find /temp -name “abc*” -print   在/temp目录下查找文件名以abc开始的文件
+find . -name test -print   在当前目录下查找文件名为test的文件
+
+
+检测某个端口所占用的进程：
+lsof -i :port
+ps -aux | grep tomcat
+netstat -pan | grep 9010
+
+对于linux主机的cpu负载使用，什么情况下user的比例升高，什么情况下system的比例升高，请联系实际举例。
+
+-us:用户进程消耗的CPU时间百分比
+us的值比较高时，说明用户进程消耗的CPU资源多，如果长期超50%的使用，那么我们就该考虑优化程序算法或者进行加速（比如PHP/PERL）
+
+-sy:内核进程消耗的CPU时间百分比（sy的值高时，说明系统内核消耗的CPU资源多，这并不是良性表现，我们应该检查原因）
+
+-wa:IO等待消耗的CPU时间百分比
+wa的值高时，说明IO等待比较严重，这可能由于磁盘大量随机访问造成，也有可能磁盘出现瓶颈（块操作）
+-id:CPU处于空闲状态时间百分比,如果空闲时间(cpu id)持续为0并且系统时间(cpu sy)是用户时间的两倍(cpu us) 系统则面临着CPU资源的短缺
+
+在不umount的情况下，如何重新设置mount的参数。
+mount -o remount,rw /
+
+
+不小心在系统下执行了chmod -x /bin/chmod 怎么办？
+
+mv /bin/chmod /bin/chmod_backup
+
+cp /bin/cp /bin/chmod
+
+cat /bin/chmod_backup > /bin/chmod
+
+从其他主机scp一个chmod过来
+python -c '__import__("os").chmod("/bin/chmod", 0755)'
+
+5、linux文件的权限位x对目录和文件有何不同？
+x权限对目录而言，表示这个用户可以进入该目录（浏览，即可以ls列出目录下的东西）
+对文件而言，表示对文件有可执行权限
+
+6、找出/taomee目录下的所有常规文件并设置权限755
+
+find /taomee -type f | xargs chmod 755
+-prem  查找指定权限
+
+7、如何查找某一文件被哪个进程打开？
+
+比如查看/usr/bin/mysqld_safe这个文件是被哪个进程打开的，可以使用命令：
+lsof /usr/bin/mysqld_safe
+
+
+8、新增一块存储设备，lvm操作的命令如何写
+答：LVM是在磁盘分区和文件系统之间添加的一个逻辑层，来为文件系统屏蔽下层磁盘分区布局，提供一个抽象的盘卷，在盘卷上建立文件系统。
+对新增存储设备的lvm操作步骤如下：
+1、 创建分区
+2、 创建物理卷
+3、 创建卷组
+4、 激活卷组
+5、 添加新的物理卷到卷组中
+6、 创建逻辑卷
+7、调整逻辑卷的大小
+8、挂载使用
+
+给主机增加host：172.16.0.2增加gateway 10.0.0.1
+
+即时生效，但也只是临时生效 route add default gw 10.0.0.1  
+永久生效，修改配置文件的gateway vim /etc/sysconfig/network-scripts/ifcfg-eth0
+开机生效  echo "route add default gw 10.0.0.1" >> /etc/rc.local
+
+socket和tcp访问mysql的区别？
+TCP/IP 访问mysql：这种方式会在TCP/IP连接上建立一个基于网络的连接请求，一般是client连接跑在Server上的MySQL实例，2台机器通过一个TCP/IP 网络连接。（一般是mysql客户端跟服务端不在同一机器上）
+socket访问mysql：UNIX域套接字并不是网络协议，所以只能在MySQL客户端和数据库实例在同一台服务器上使用，用户可以在配置文件中指定套接字文件。
+
+找出access.log中访问top 10的ip地址：
+
+awk '{print $1}' nginx.log |sort |uniq -c|sort -nr|head 
+
+cat nginx.log |cut -d ' ' -f 1 |sort |uniq -c | sort -nr | awk '{print $0 }' | head
+
+awk '{print $1}' nginx.log| sort | uniq -c | sort -n -k 1 -r | head
+
+
+4、打印1-100奇数?打印1-100偶数？打印1-100的和？打印1-100的奇数和？打印1-100的偶数和？打印1-100的质数？
+
+[root@haojiu ~]# cat jishu.sh
+#!/bin/bash
+#script using for print 奇数 .
+#author by haojiu
+#date 2015-x-x
+
+for((i=1;i<=100;i+=2))
+do 
+echo $i
+done
+
+----------------------------------------------
+[root@haojiu ~]# cat jishu.sh
+#!/bin/bash
+#script using for print 偶数 .
+#author by haojiu
+#date 2015-x-x
+
+for((i=2;i<=100;i+=2))
+do 
+echo $i
+done
+
+----------------------------------------------
+[root@haojiu ~]# cat jishu.sh
+#!/bin/bash
+#script using for print 总和 .
+#author by haojiu
+#date 2015-x-x
+/*-
+sum=0
+for i in {1..100}
+do
+let "sum+=i"
+done
+echo "$sum"
+
+----------------------------------------------
+[root@haojiu ~]# cat jishu.sh 
+#!/bin/bash
+#script using for print 奇数和 .
+#author by haojiu
+#date 2015-x-x
+
+sum=0
+for((i=1;i<=100;i+=2))
+do
+let "sum+=i"
+done
+echo "sum=$sum"
+
+
+----------------------------------------------
+[root@haojiu ~]# cat jishu.sh 
+#!/bin/bash
+#script using for print 偶数和 .
+#author by haojiu
+#date 2015-x-x
+
+sum=0
+for((i=2;i<=100;i+=2))
+do
+let "sum+=i"
+done
+echo "sum=$sum"
+----------------------------------------------
+[root@haojiu ~]# cat jishu.sh 
+#!/bin/bash
+#script using for print 质数 .
+#author by Internet
+#date 2015-x-x
+
+for i in `seq 2 100`
+do
+   factor $i | awk -F'[: ]' 'NF==3{print $1}'
+done
+
+
+5、删除一个文件中行号为奇数的行
+答：sed  'N;{P;d}' filename 
+
+6、替换某一个文件的字符串
+答：豪鹫提供两种方法，sed和vim，例如将文件中所有的jjj替换成hhh
+
+[root@haojiu ~]# sed -i "s/jjj/hhh/g" test.txt
+[root@haojiu ~]# vim test.txt
+：%s/jjj/hhh/g
+
+
+7、exec和souce区别
+答：所谓 source 就是让 script 在当前 shell 内执行、而不是产生一个 sub-shell 来执行。
+ exec 也是让 script 在同一个行程上执行，但是原有行程则被结束了。
+他们的最大区别就是在于：原有行程会否终止
+
+
+
+RAID0：N块盘组逻辑容量N块盘容量；
+RAID1：两块盘组逻辑容量一块盘容量；
+RAID3：N+1块盘组逻辑容量N块盘容量；
+RAID5：N块盘组逻辑容量N-1块盘容量；
+RAID6：N块盘组逻辑容量N-2块盘容量；
+RAID10：2N块盘组逻辑容量N块盘容量；
+RAID50：假每RAID5由N块盘组共MRAID5组该RAID50则逻辑容量(N-1)*M块盘容量
+
+
+
+
+
+
+

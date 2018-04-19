@@ -1,0 +1,1324 @@
+1.解释下什么是GPL,GNU,自由软件？
+GPL：（通用公共许可证）：一种授权，任何人有权取得、修改、重新发布自由软件的权力。
+GNU:(革奴计划)：目标是创建一套完全自由、开放的的操作系统。
+自由软件：是一种可以不受限制地自由使用、复制、研究、修改和分发的软件。主要许可证有GPL和BSD许可证两种。
+
+2.如何选择Linux操作系统版本?
+一般来讲，桌面用户首选Ubuntu；服务器首选RHEL或CentOS，两者中首选CentOS。
+根据具体要求：
+①安全性要求较高，则选择Debian或者FreeBSD。
+②需要使用数据库高级服务和电子邮件网络应用的用户可以选择SUSE。
+③想要新技术新功能功能可以选择Feddora，Feddora是RHEL和CentOS的一个测试版和预发布版本。
+④根据现有状况，绝大多数互联网公司选择CentOS。现在比较常用的是6系列，现在市场占有大概一半左右。另外的原因是CentOS更侧重服务器领域，并且无版权约束。
+
+
+4.请描述Linux系统优化的12个步骤。
+⑴登录系统:不使用root登录，通过sudo授权管理，使用普通用户登录。
+⑵禁止SSH远程：更改默认的远程连接SSH服务及禁止root远程连接。
+⑶时间同步：定时自动更新服务器时间。
+⑷配置yum更新源，从国内更新下载安装rpm包。
+⑸关闭selinux及iptables（iptables工作场景如有wan ip，一般要打开，高并发除外）
+⑹调整文件描述符数量，进程及文件的打开都会消耗文件描述符。
+⑺定时自动清理/var/spool/clientmquene/目录垃圾文件，防止节点被占满（c6.4默认没有sendmail，因此可以不配。）
+⑻精简开机启动服务（crond、sshd、network、rsyslog）
+⑼Linux内核参数优化/etc/sysctl.conf，执行sysct -p生效。
+更改字符集，支持中文，但是还是建议使用英文，防止乱码问题出现。
+⑾锁定关键系统文件（chattr +i /etc/passwd /etc/shadow /etc/group /etc/gshadow /etc/inittab 处理以上内容后，把chatter改名，就更安全了。）
+⑿清空/etc/issue，去除系统及内核版本登陆前的屏幕显示。
+
+
+7.描述Linux下软链接和硬链接的区别：
+
+在Linux系统中，链接分为两种，一种是硬链接（Hard link），另一种称为符号链接或软链接（Symbolic Link）。
+①默认不带参数的情况下，ln创建的是硬链接，带-s参数的ln命令创建的是软链接。
+②硬链接文件与源文件的inode节点号相同，而软链接文件的inode节点号，与源文件不同，
+③ln命令不能对目录创建硬链接，但可以创建软链接。对目录的软链接会经常使用到。
+④删除软链接文件，对源文件和硬链接文件无任何影响。
+⑤删除文件的硬链接文件，对源文件及软链接文件无任何影响。
+⑥删除链接文件的源文件，对硬链接文件无影响，会导致其软链接失效（红底白字闪烁状）。
+⑦同时删除源文件及其硬链接文件，整个文件才会被真正的删除。
+⑧很多硬件设备的快照功能，使用的就是类似硬链接的原理。
+⑨软链接可以跨文件系统，硬链接不可以跨文件系统。
+
+8.生产场景如何对linux系统进行合理规划分区？
+分区的根本原则是简单、易用、方便批量管理。根据服务器角色定位建议如下：
+①单机服务器：如8G内存，300G硬盘
+分区：  /boot 100-200M，swap 16G，内存大小8G*2，/ 80G，/var 20G（也可不分），/data 180G（存放web及db数据）
+优点：数据盘和系统盘分开，有利于出问题时维护。
+RAID方案：视数据及性能要求，一般可采用raid5折中。 
+②负载均衡器（如LVS等） 
+分区：/boot 100-200M，swap 内存的1-2倍，/  ，
+优点：简单方便，只做转发数据量很少。 
+RAID方案：数据量小，重要性高，可采用RAID1 
+③负载均衡下的RS server
+分区： /boot 100-200M，swap 内存的1-2倍，/  
+优点：简单方便，因为有多机，对数据要求低。 
+RAID方案：数据量大，重要性不高，有性能要求，数据要求低，可采用RAID0 
+④数据库服务器mysql及oracle如16/32G内存
+分区：/boot 100-200M，swap 16G，内存的1倍，/ 100G，/data 剩余（存放db数据） 
+优点：数据盘和系统盘分开，有利于出问题时维护,及保持数据完整。 
+RAID方案：视数据及性能要求主库可采取raid10/raid5，从库可采用raid0提高性能（读写分离的情况下。）
+⑤存储服务器
+分区：/boot 100-200M，swap 内存的1-2倍，/ 100G，/data(存放数据) 
+优点：此服务器不要分区太多。只做备份，性能要求低。容量要大。 
+RAID方案：可采取sata盘，raid5 
+⑥共享存储服务器（如NFS） 
+分区：/boot 100-200M，swap 内存的1-2倍，/ 100G，/data(存放数据) 
+优点：此服务器不要分区太多。NFS共享比存储多的要求就是性能要求。 
+RAID方案：视性能及访问要求可以raid5,raid10,甚至raid0（要有高可用或双写方案） 
+⑦监控服务器cacti,nagios 
+分区：/boot 100-200M，swap 内存的1-2倍，/ 
+优点：重要性一般，数据要求也一般。 
+RAID方案：单盘或双盘raid1即可。三盘就RAID5，看容量要求加盘即可。
+
+
+9.描述Linux下文件删除的原理
+Linux系统是通过link的数量来控制文件删除的，只有当一个文件不存在任何link的时候，这个文件才会被删除。一般来说每个文件两个link计数器来控制i_count和i_nlink。
+当一个文件被一个程序占用的时候i_count就加1。当文件的硬链接多一个的时候i_nlink也加1。删除一个文件，就是让这个文件，没有进程占用，同时i_link数量为0。
+
+10.请简单描述VI编辑器的使用
+①vi编辑器是linux系统下最最基本和最常用的标准文本编辑器。
+②vi编辑器有三种工作模式：普通模式、编辑模式、命令模式。
+③普通模式下的键盘输入任何字符都是当作命令来执行的，也可以输入命令进行光标的移动，字符、单词、行的复制、粘帖以及删除等操作。
+④编辑模式主要用于文本的输入。在该模式下，用户输入的任何字符都被作为文件的内容保存起来。
+⑤命令模式下，用户可以对文件进行一些如字符串查找、替换、显示行号等操作还是必须要进入命令模式的。
+⑥在普通模式下输入冒号即可进入命令模式，此时vi窗口的状态行会显示出冒号，等待用户输入命令。
+“i”插入模式，即可以进行编辑。用户输入完成后，按【Esc】之后编辑器又返回到普通模式下，在命令模式下，保存退出，可以使用的命令为wq和x。
+前面加！表示强制退出，强制保存等。
+
+
+11.请简单说出用户管理的相关命令及用途
+#组管理命令
+groupadd #添加组
+groupdel #删除用户组
+groupmod #修改用户组
+groups  #显示当前用户所属的用户组
+grpck   #检查用户组及密码文件的完整性（etc/group以及/etc/gshadow文件）
+grpconv #通过/etc/group和/etc/gshadow 的文件内容来同步或创建/etc/gshadow ，如果/etc/gshadow 不存在则创建；
+grpunconv #通过/etc/group 和/etc/gshadow 文件内容来同步或创建/etc/group ，然后删除gshadow文件 。
+ 
+#用户管理命令
+useradd #添加用户
+adduser #添加用户
+passwd  #为用户设置密码
+usermod #修改用户命令，可以通过usermod 来修改登录名、用户的家目录等等
+pwcov   #同步用户从/etc/passwd 到/etc/shadow
+pwck   #pwck是校验用户配置文件/etc/passwd 和/etc/shadow文件内容是否合法或完整
+pwunconv #执行pwunconv指令可以关闭用户投影密码，它会把密码从shadow文件内，重回存到passwd文件里。
+finger #查看用户信息工具（危险命令，一般不用）
+id #查看用户的UID、GID及所归属的用户组
+chfn #更改用户信息工具
+su #用户切换工具
+
+
+14.请给出查看当前哪些用户在线的Linux命令
+w        #显示目前系统登录用户
+who      #显示目前已登录用户信息
+last     #列出目前与过去登入系统的用户相关信息
+lastlog  #检查某特定用户上次登录时间
+whoami   #打印与当前生效的用户ID关联的用户名
+finger   #用户信息查找程序
+id       #显示指定用户或当前用户的用户与组信息
+
+
+16.请列出Linux中你认为重要的文件夹及包含内容
+① /目录下的文件夹里面分别是以下内容： 
+/usr 包含所有的命令和程序库、文档和其他文件及当前linux发行版的主要应用程序
+/var 包含正在操作的文件，还有记录文件、加密文件、临时文件等
+/home 除了root用户外的所有用户的配置文件，个性化文件和主目录，即家目录
+/proc 虚拟目录，该目录实际上指向内存而不是硬盘
+/bin    系统执行文件（二进制文件）普通用户可以使用
+/sbin 系统执行文件（二进制文件）不能被普通用户使用，通常由root用户使用
+/etc 操作系统的配置文件
+/root root用户的家目录
+/dev 系统设备文件，linux所有设备都是以文件的形式被处理，该目录不包含驱动程序
+/lib 程序和核心模块共享库（仅限于/下的程序）
+/boot 系统引导、启动文件，通常grub也在这里
+/opt 可选应用程序目录
+/tmp 临时文件，系统会自动清理
+/lost+found 恢复文件（类似回收站）
+/media 所有的磁盘（有时有光盘）将以文件夹的形式挂载，光盘镜像也可以挂载 
+/cd-rom 挂载光盘的地方
+ 
+② /usr目录下的文件比较重要，其作用下面分类列出： 
+/usr/X11 X-windows桌面环境
+/usr/doc linux系统的文档资料
+/usr/share 独立于当前计算机的数据结构，如字典中的词
+/usr/bin 类似/bin但是不参与启动，大部分命令都在这里
+/usr/local 本地管理员安装的应用程序
+/usr/local/bin 用户安装的应用程序（部分）
+ 
+③ /proc目录的内容 
+/proc/cpuinfo 处理器的信息
+/proc/devices 当前运行内核的所有设备清单
+/proc/dma 当前正在使用中的DMA通道
+/proc/filesystem 当前运行内核所配置的文件系统
+/proc/interrupts 当前使用的中断和曾经有多少个中断
+/proc/ioports 正在使用的I/O端口
+ 
+17.给出正确的关机和重启服务器的命令
+⑴shutdown
+  [-t] 指定在多长时间之后关闭系统
+  [-r] 重启系统
+  [-k] 并不真正关机，只是给每个登录用户发送警告信号
+  [-h] 关闭系统（halt）
+⑵halt
+　　halt是最简单的关机命令，其实际上是调用shutdown -h命令。halt执行时，杀死应用进程，文件系统写操作完成后就会停止内核。
+　　halt命令的部分参数如下：
+　　[-f] 没有调用shutdown而强制关机或重启
+　　[-i] 关机或重新启动之前，关掉所有的网络接口
+　　[-p] 关机时调用poweroff，此选项为缺省选项
+⑶reboot
+  reboot工作过程与halt类似，作用是重新启动，而halt是关机。其参数与halt类似。
+⑷init
+  init是所有进程的祖先，其进程号始终为1。init用于切换系统的运行级别，切换的工作是立即完成的。init 0命令用于立即将系统运行级别切换为0，即关机；init 6命令用于将系统运行级别切换为6，即重新启动。
+
+
+
+Linux如何修改文件和文件夹的权限?
+修改属主：   chown [-R] 新属主  文件
+            -R： 将文件夹中的所有文件也更改掉
+修改属组：   charp  [-R]  先属组  文件
+修改权限：   chmod [-R]  新权限  文件
+linux特有功能（ext2 ext3所体现的）：
+列出所有权限命令：lsattr
+设置特殊权限：    chattr
+新权限有两种表示方法：
+（1）    直观：  如  rw-r—r—
+数字        6   4  4
+110100100
+（2）字母法：  如  rw-r–r–
+u  g  o
+修改文件的访问权限不必非得是root，文件属主也可以
+init进程作用是什么？
+init进程是所有进程的发起者和控制者
+init是第一个运行的进程
+init的进程编号永远是1
+如果init出现问题，系统随之垮掉
+init的角色：终极父进程，失去父进程的子进程以init作为它们的父进程
+特定的运行级别是运行相应的程序
+init读取配置文件/etc/inittab，决定启动运行的级别
+linux开机引导步骤是什么？
+加载内核
+内核就必须完整地加载到可用RAM的第一个兆字节之内。为了实现这个目的，内核是被压缩了的。
+这个文件的头部包含着必要的代码，先设置CPU进入安全模式（以此解除内存限制）再对内核的剩余部分进行解压缩。
+执行内核
+内核在内存中解压缩之后，它就可以开始运行了
+一旦内核启动运行，对硬件的检测就会决定需要对哪些设备驱动程序进行初始化。
+内核就能够挂装根文件系统，内核挂装了根文件系统之后，
+启动并运行一个叫做init的程序。
+ext2和ext3的区别是什么？
+ext2是使用最普遍的linux filesystem
+ext3基于ext2
+都是磁盘结构
+ext2可以转换成ext3
+ext3可以挂载在ext2文件系统
+介绍一下linux文件系统： （1）/bin：该目录用于存放用户命令。 目录 /usr/bin 中也存放了一些用户命令。 （2）/sbin：该目录用于存放许多系统命令，例如 shutdown。目录 /usr/bin 中也包括了许多系统命令。 （3）/root：该目录用于存放根用户（超级用户）的主目录 （4）/mnt：该目录主要用于存放系统引导后被挂载的文件系统的挂载点。 （5）/boot：该目录用于存放内核和其它系统启动时使用的文件。 （6）/lost+found：该目录被fsck用于存放零散文件（没有名称的文件） （7）/lib：该目录用于存放被 /bin 和 /sbin 中的程序使用的库文件。 目录 /usr/bin 中含有更多库文件。 （8）/dev：该目录用于存放设备文件。 （9）/etc：该目录用于存放许多配置文件和目录 （10）/var：该目录用于存放系统中不断扩充、变化的文件，例如日志文件和锁定文件。 （11）/usr：该目录用于存放与系统用户直接有关的文件和目录。 （12）/proc：该目录是一个虚拟的文件系统（不是实际贮存在磁盘上的），它包括被某些程序使用的系统信息 （13）/initrd：该目录用于存放在计算机启动时挂载 initrd.img 映像文件的目录以及载入所需的设备模块。 （14）/tmp：该目录用于存放用户程序运行时所产生或保存的一些临时文件。 /tmp 有全局读写权。 （15）/home：该目录用于存放用户主目录的位置
+Linux上比较文件的命令都有哪些?
+cmp命令
+cmp [options] file1 file2
+比较两个文件，给出差别字符的位置和行号。同时可以设置选项使得cmp给出结果时同时显示差别字符。
+-c 显示第一个差别字符
+-l 以十进制显示差别字符的位置，并以八进制显示其数值
+
+diff 命令
+diff [options] file1 file2
+普通输出格式：
+仅按序显示差别行
+上下文输出格式：-C
+以一些行作为上下文（上下文hunk）来显示差别行，以便用户更清楚地知道所比较文件的差别。
+统一输出格式：-U
+修改了上下文格式，取消了重复的上下文并简化了输出。
+
+diff3 命令
+两个人同时修改了一个公用文件的情况下，使用diff3命令，可以比较两个文件对一个源文件的修改，并把结果合并在一个输出文件中，用以指出两个文件对源文件所作的修改的冲突之处。
+diff3 [options] myfile oldfile yourfile
+介绍一下Make? 为什么使用make
+1、包含多个源文件的项目在编译时有长而复杂的命令行，可以通过makefile保存这些命令行来简化该工作
+2、make可以减少重新编译所需要的时间，因为make可以识别出哪些文件是新修改的
+3、Make维护了当前项目中各文件的相关关系，从而可以在编译前检查
+是否可以找到所有的文件 
+Linux的主要特性有哪些?
+Linux是免费的、源代码开放的、符合POSIX标准规范的操作系统
+PMMU — 页式内存管理
+抢占式多任务处理
+VFS – 虚拟文件系统
+网络功能（如，支持TCP/IP ）
+动态加载模块
+支持SMP
+支持绝大多数的32位和64位CPU 等 
+说一下sort命令的作用和用法?
+ sort命令 ?一般格式： sort   [选项]  文件列表 
+?说明：用来对文本文件的各行进行排序        
+ 排序比较是依据从输入文件的每一行中提取的一个或多个排序关键字进行的。   
+?选项：    
+ -m    对已经排好序的文件统一进行合并，但不做排序。     
+ -c     检查给定的文件是否已排好序，若没有，则显示出错消息，不做  排序。     
+ -u     与-c选项一起用，严格地按顺序检查；否则，对排序后的重复行只输出第一行。     
+ -o  文件名      将排序输出放到该文件名所指定的文件中。如果该文件不存在，则创建一个新文件。
+什么是虚拟内存?虚拟内存有什么优势?
+虚拟内存是计算机系统内存管理的一种技术。它使得应用程序认为它拥有连续的可用的内存（一个连续完整的地址空间），而实际上，它通常是被分隔成多个物理内存碎片，还有部分暂时存储在外部磁盘存储器上，在需要时进行数据交换。与没有使用虚拟内存技术的系统相比，使用这种技术的系统使得大型程序的编写变得更容易，对真正的物理内存（例如RAM）的使用也更有效率。
+
+物理内存有限，是一种稀缺资源
+32位系统中，每个进程独立的占有4G虚拟空间。
+虚拟内存优势：
+用户程序开发方便
+保护内核不受恶意或者无意的破坏
+隔离各个用户进程
+shell编程题：
+1．用Shell编程，判断一文件是不是字符设备文件，如果是将其拷贝到 /dev 目录下。
+    #!/bin/sh
+    FILENAME=
+    echo “Input file name：”
+    read FILENAME
+    if [ -c "$FILENAME" ]
+    then
+    cp $FILENAME /dev
+    fi
+2.请下列shell程序加注释，并说明程序的功能和调用方法：#!/bin/sh
+    #!/bin/sh
+    #
+    # /etc/rc.d/rc.httpd
+    #
+    # Start/stop/restart the Apache web server.
+    #
+    # To make Apache start automatically at boot, make this
+    # file executable: chmod 755 /etc/rc.d/rc.httpd
+    #
+    case “$1″ in
+    ‘start’)
+    /usr/sbin/apachectl start ;;
+    ‘stop’)
+    /usr/sbin/apachectl stop ;;
+    ‘restart’)
+    /usr/sbin/apachectl restart ;;
+    *)
+    echo “usage $0 start|stop|restart” ;;
+    esac
+    参考答案：
+    （1）程序注释
+    #!/bin/sh 定义实用的shell
+    #
+    # /etc/rc.d/rc.httpd 注释行，凡是以#号开始的行均为注释行。
+    #
+    # Start/stop/restart the Apache web server.
+    #
+    # To make Apache start automatically at boot, make this
+
+    # file executable: chmod 755 /etc/rc.d/rc.httpd
+    #
+    case “$1″ in #case结构开始，判断“位置参数”决定执行的操作。本程序携带一个“位置参数”，即$1
+    ‘start’) #若位置参数为start
+    /usr/sbin/apachectl start ;; #启动httpd进程
+    ‘stop’) #若位置参数为stop
+    /usr/sbin/apachectl stop ;; #关闭httpd进程
+    ‘restart’) #若位置参数为stop
+    /usr/sbin/apachectl restart ;; #重新启动httpd进程
+    *) #若位置参数不是start、stop或restart时
+    echo “usage $0 start|stop|restart” ;; #显示命令提示信息：程序的调用方法
+    esac #case结构结束
+
+3．设计一个shell程序，添加一个新组为class1，然后添加属于这个组的30个用户，用户名的形式为stdxx，其中xx从01到30。
+    #!/bin/sh
+    i=1
+    groupadd class1
+    while [ $i -le 30 ]
+    do
+    if [ $i -le 9 ] ;then
+    USERNAME=stu0${i}
+    else
+    USERNAME=stu${i}
+    fi
+    useradd $USERNAME
+    mkdir /home/$USERNAME
+    chown -R $USERNAME /home/$USERNAME
+    chgrp -R class1 /home/$USERNAME
+    i=$(($i+1))
+    done
+4．编写shell程序，实现自动删除50个账号的功能。账号名为stud1至stud50。
+    #!/bin/sh
+    i=1
+    while [ $i -le 50 ]
+    do
+    userdel -r stud${i}
+    i=$(($i+1 ))
+    done
+5．某系统管理员需每天做一定的重复工作，请按照下列要求，编制一个解决方案：
+（1）在下午4 :50删除/abc目录下的全部子目录和全部文件；
+（2）从早8:00～下午6:00每小时读取/xyz目录下x1文件中每行第一个域的全部数据加入到/backup目录下的bak01.txt文件内；
+（3）每逢星期一下午5:50将/data目录下的所有目录和文件归档并压缩为文件：backup.tar.gz；
+（4）在下午5:55将IDE接口的CD-ROM卸载（假设：CD-ROM的设备名为hdc）；
+（5）在早晨8:00前开机后启动。
+
+    （1）用vi创建编辑一个名为prgx的crontab文件；
+    （2）prgx文件的内容：
+    50 16 * * * rm -r /abc/*
+    0 8-18/1 * * * cut -f1 /xyz/x1 >> /backup/bak01.txt
+    50 17 * * * tar zcvf backup.tar.gz /data
+    55 17 * * * umount /dev/hdc
+
+（3）由超级用户登录，用crontab执行 prgx文件中的内容
+    root@xxx:#crontab prgx；在每日早晨8:00之前开机后即可自动启动crontab。
+6．设计一个shell程序，在每月第一天备份并压缩/etc目录的所有内容，存放在/root/bak目录里，且文件名为如下形式yymmdd_etc，yy为年，mm为月，dd为日。Shell程序fileback存放在/usr/bin目录下
+    （1）编写shell程序fileback：
+        #!/bin/sh
+        DIRNAME=`ls /root | grep bak`
+        if [ -z "$DIRNAME" ] ; then
+        mkdir /root/bak
+        cd /root/bak
+        fi
+        YY=`date +%y`
+        MM=`date +%m`
+        DD=`date +%d`
+        BACKETC=$YY$MM$DD_etc.tar.gz
+        tar zcvf $BACKETC /etc
+        echo “fileback finished!    
+    （2）编写任务定时器：
+        echo “0 0 1 * * /bin/sh /usr/bin/fileback” >; /root/etcbakcron
+        crontab /root/etcbakcron
+        或使用crontab -e 命令添加定时任务：
+        0 0 1 * * /bin/sh /usr/bin/fileback
+7．有一普通用户想在每周日凌晨零点零分定期备份/user/backup到/tmp目录下
+    （1）第一种方法：
+        用户应使用crontab –e 命令创建crontab文件。格式如下：
+        0 0 * * 0 cp –r /user/backup /tmp
+    （2）第二种方法：
+        0 * * sun cp –r /user/backup /tmp
+        然后执行 crontab file 使生效
+8. 设计一个Shell程序，在/userdata目录下建立50个目录，即user1～user50，并设置每个目录的权限，其中其他用户的权限为：读；文件所有者的权限为：读、写、执行；文件所有者所在组的权限为：读、执行。
+    参考答案: 建立程序 Pro16如下：
+    #!/bin/sh
+    i=1
+    while [ i -le 50 ]
+    do
+    if [ -d /userdata ];then
+    mkdir -p /userdata/user$i
+    chmod 754 /userdata/user$i
+    echo “user$i”
+    let “i = i + 1″ （或i=$（（$i＋1））
+    else
+    mkdir /userdata
+    mkdir -p /userdata/user$i
+    chmod 754 /userdata/user$i
+    echo “user$i”
+    let “i = i + 1″ （或i=$（（$i＋1））
+    fi
+    done
+13．某/etc/fstab文件中的某行如下： /dev/had5 /mnt/dosdata msdos defaults,usrquota 1 2
+（1）第一列：将被加载的文件系统名；（2）第二列：该文件系统的安装点；
+（3）第三列：文件系统的类型；（4）第四列：设置参数；
+（5）第五列：供备份程序确定上次备份距现在的天数；
+（6）第六列：在系统引导时检测文件系统的顺序
+14．Apache服务器的配置文件httpd.conf中有很多内容，请解释如下配置项： （1）MaxKeepAliveRequests 200 （2）UserDir public_html （3）DefaultType text/plain （4）AddLanguare en.en （5）DocumentRoot“/usr/local/httpd/htdocs” （6）AddType application/x-httpd-php.php.php.php4
+（1）允许每次连接的最大请求数目，此为200；（2）设定用户放置网页的目录；
+（3）设置服务器对于不认识的文件类型的预设格式；
+（4）设置可传送语言的文件给浏览器；（5）该目录为Apache放置网页的地方；
+（6）服务器选择使用php4。
+15．某Linux主机的/etc/rc.d/rc.inet1文件中有如下语句，请修正错误，并解释其内容。 /etc/rc.d/rc.inet1：
+ROUTE add –net default gw 192.168.0.101 netmask 255.255.0.0 metric 1
+ROUTE add –net 192.168.1.0 gw 192.168.0.250 netmask 255.255.0.0 metric 1
+参考答案:
+修正错误:
+（1）ROUTE应改为小写：route；（2）netmask 255.255.0.0应改为:netmask 255.255.255.0；
+（3）缺省路由的子网掩码应改为:netmask 0.0.0.0；
+（4）缺省路由必须在最后设定,否则其后的路由将无效。
+解释内容:
+（1）route：建立静态路由表的命令；（2）add：增加一条新路由；
+（3）-net 192.168.1.0：到达一个目标网络的网络地址；
+（4）default：建立一条缺省路由；（5）gw 192.168.0.101：网关地址；
+（6）metric 1：到达目标网络经过的路由器数（跳数）。
+6．什么是静态路由，其特点是什么?什么是动态路由，其特点是什么?
+静态路由是由系统管理员设计与构建的路由表规定的路由。适用于网关数量有限的场合，且网络拓朴结构不经常变化的网络。其缺点是不能动态地适用网络状况的变化，当网络状况变化后必须由网络管理员修改路由表。
+动态路由是由路由选择协议而动态构建的，路由协议之间通过交换各自所拥有的路由信息实时更新路由表的内容。动态路由可以自动学习网络的拓朴结构，并更新路由表。其缺点是路由广播更新信息将占据大量的网络带宽。
+7．进程的查看和调度分别使用什么命令?
+进程查看的命令是ps和top。
+进程调度的命令有at，crontab，batch，kill。
+8．当文件系统受到破坏时，如何检查和修复系统?
+成功修复文件系统的前提是要有两个以上的主文件系统，并保证在修复之前首先卸载将被修复的文件系统。
+使用命令fsck对受到破坏的文件系统进行修复。fsck检查文件系统分为5步，每一步检查系统不同部分的连接特性并对上一步进行验证和修改。在执行 fsck命令时，检查首先从超级块开始，然后是分配的磁盘块、路径名、目录的连接性、链接数目以及空闲块链表、i-node。
+9．解释i节点在文件系统中的作用。 在linux文件系统中，是以块为单位存储信息的，为了找到某一个文件在存储空间中存放的位置，用i节点对一个文件进行索引。I节点包含了描述一个文件所必须的全部信息。所以i节点是文件系统管理的一个数据结构。 10．什么是符号链接，什么是硬链接?符号链接与硬链接的区别是什么? 链接分硬链接和符号链接。 符号链接可以建立对于文件和目录的链接。符号链接可以跨文件系统，即可以跨磁盘分区。符号链接的文件类型位是l，链接文件具有新的i节点。 硬链接不可以跨文件系统。它只能建立对文件的链接，硬链接的文件类型位是－，且硬链接文件的i节点同被链接文件的i节点相同。
+12．简述网络文件系统NFS，并说明其作用。 网络文件系统是应用层的一种应用服务，它主要应用于Linux和Linux系统、Linux和Unix系统之间的文件或目录的共享。对于用户而言可以通过 NFS方便的访问远地的文件系统，使之成为本地文件系统的一部分。采用NFS之后省去了登录的过程，方便了用户访问系统资源。
+2．简述进程的启动、终止的方式以及如何进行进程的查看。 参考答案： 在Linux中启动一个进程有手工启动和调度启动两种方式： （1）手工启动 用户在输入端发出命令，直接启动一个进程的启动方式。可以分为： ①前台启动：直接在SHELL中输入命令进行启动。 ②后台启动：启动一个目前并不紧急的进程，如打印进程。 （2）调度启动 系统管理员根据系统资源和进程占用资源的情况，事先进行调度安排，指定任务运行的时间和场合，到时候系统会自动完成该任务。 经常使用的进程调度命令为：at、batch、crontab。 3. 简述DNS进行域名解析的过程。 参考答案： 首先，客户端发出DNS请求翻译IP地址或主机名。DNS服务器在收到客户机的请求后： （1）检查DNS服务器的缓存，若查到请求的地址或名字，即向客户机发出应答信息； （2）若没有查到，则在数据库中查找，若查到请求的地址或名字，即向客户机发出应答信息； （3）若没有查到，则将请求发给根域DNS服务器，并依序从根域查找顶级域，由顶级查找二级域，二级域查找三级，直至找到要解析的地址或名字，即向客户机所在网络的DNS服务器发出应答信息，DNS服务器收到应答后现在缓存中存储，然后，将解析结果发给客户机。 （4）若没有找到，则返回错误信息。
+10.其他问题：
+1.如何查看nginx mysql apache的版本
+    查看linux版本号：cat /etc/redhat-release
+                    head -n1 /etc/issue
+    查看内核版本：cat /proc/version
+                uname -a 
+                uname -r
+
+    查看apache的版本：
+        /usr/sbin/apachectl -v
+        httpd -v
+    查看mysql版本：
+        mysql -help | grep Distrib
+        mysql -V
+        /bin/mysql -u root -p -e "select version()"
+        mysqladmin version
+
+    查看php版本：
+        php -v
+        phpinfo()
+    查看nginx版本：
+        nginx -V
+
+    查看nginx编译参数：
+        /usr/local/nginx/sbin/nginx -V
+
+    查看apache编译参数：
+        cat /usr/local/apache/build/config.nice
+        /usr/local/apache/bin/apachectl -V
+
+    查看php编译参数：
+        /usr/local/php/bin/php -i|grep configure
+        /usr/local/php/bin/php-config
+
+    查看mysql编译参数：
+        cat "/usr/local/mysql/bin/mysqlbug" | grep configure
+
+
+Docker
+Docker是一个开发的平台，用来为开发者和系统管理员构建、发布和运行分布式应用。
+它是用Go语言写的，是程序运行的“容器”（Linux containers），实现了应用级别的隔离（沙箱）。多个容器运行时互不影响，安全而稳定。
+开源的应用容器引擎，基于 Go 语言 并遵从Apache2.0协议开源。
+Docker 可以让开发者打包他们的应用以及依赖包到一个轻量级、可移植的容器中，然后发布到任何流行的 Linux 机器上，也可以实现虚拟化。
+容器是完全使用沙箱机制，相互之间不会有任何接口（类似 iPhone 的 app）,更重要的是容器性能开销极低。
+
+1.image 镜像
+镜像就是一个只读的模板。比如，一个镜像可以包含一个完整的Ubuntu系统，并且安装了apache。
+镜像可以用来创建Docker容器。
+其他人制作好镜像，我们可以拿过来轻松的使用。这就是吸引我的特性。
+2.Docker container 容器
+Docker用容器来运行应用。容器是从镜像创建出来的实例（好有面向对象的感觉，类和对象），它可以被启动、开始、停止和删除。
+3.仓库
+这个好理解了，就是放镜像的文件的场所。比如最大的公开仓库是Docker Hub。
+Docker的应用场景
+Web 应用的自动化打包和发布。
+自动化测试和持续集成、发布。
+在服务型环境中部署和调整数据库或其他的后台应用。
+从头编译或者扩展现有的OpenShift或Cloud Foundry平台来搭建自己的PaaS环境。
+docker命令：
+docker run ubuntu:15.10 /bin/echo "Hello world"
+
+我们通过docker的两个参数 -i -t，让docker运行的容器实现"对话"的能力
+docker run -i -t ubuntu:15.10 /bin/bash
+
+后台模式启动容器：
+docker run -d ubuntu:15.10 /bin/sh -c "while true; do echo hello world; sleep 1; done"
+
+查看docker容器的运行状态：
+docker ps
+
+在容器内使用docker logs命令，查看容器内的标准输出
+docker logs 2b1b7a428627
+
+我们使用 docker stop 命令来停止容器
+docker stop amazing_cori
+
+docker 客户端非常简单 ,我们可以直接输入 docker 命令来查看到 Docker 客户端的所有命令选项。
+docker
+
+可以通过命令 docker command --help 更深入的了解指定的 Docker 命令使用方法。
+docker stats --help
+
+我们将在docker容器中运行一个 Python Flask 应用来运行一个web应用。
+
+docker run -d -P training/webapp python app.py
+
+指定 -p 标识来绑定指定端口。
+docker run -d -p 5000:5000 training/webapp python app.py
+
+我可以使用docker port 7a38a1ad55c6 或docker port determined_swanson来查看容器端口的映射情况
+docker port 7a38a1ad55c6
+
+查看WEB应用程序日志
+docker logs -f 7a38a1ad55c6
+-f:让 dokcer logs 像使用 tail -f 一样来输出容器内部的标准输出。
+
+我们还可以使用 docker top 来查看容器内部运行的进程
+ docker top determined_swanson
+
+使用 docker inspect 来查看Docker的底层信息。它会返回一个 JSON 文件记录着 Docker 容器的配置和状态信息。
+docker inspect determined_swanson
+
+ docker stop determined_swanson   
+
+ docker start determined_swanson
+
+ docker ps -l 查询最后一次创建的容器：
+
+ 使用 docker rm 命令来删除不需要的容器
+
+ docker rm determined_swanson 
+ 删除容器时，容器必须是停止状态，否则会报如下错误
+列出镜像列表
+docker images 
+docker run -t -i ubuntu:15.10 /bin/bash 
+当我们在本地主机上使用一个不存在的镜像时 Docker 就会自动下载这个镜像
+docker pull ubuntu:13.10
+查找镜像    
+docker search httpd
+拖取镜像
+docker pull httpd
+docker run httpd
+创建镜像
+.从已经创建的容器中更新镜像，并且提交这个镜像
+.使用 Dockerfile 指令来创建一个新的镜像
+更新镜像
+更新镜像之前，我们需要使用镜像来创建一个容器。
+docker run -t -i ubuntu:15.10 /bin/bash
+输入 exit命令来退出这个容器。
+docker commit -m="has update" -a="runoob" e218edb10161 runoob/ubuntu:v2
+使用 docker images 命令来查看我们的新镜像 
+使用我们的新镜像 runoob/ubuntu 来启动一个容器
+docker run -t -i runoob/ubuntu:v2 /bin/bash  
+构建镜像
+我们需要创建一个 Dockerfile 文件，其中包含一组指令来告诉 Docker 如何构建我们的镜像。     
+runoob@runoob:~$ cat Dockerfile 
+FROM    centos:6.7
+MAINTAINER      Fisher "fisher@sudops.com"
+
+RUN     /bin/echo 'root:123456' |chpasswd
+RUN     useradd runoob
+RUN     /bin/echo 'runoob:123456' |chpasswd
+RUN     /bin/echo -e "LANG=\"en_US.UTF-8\"" >/etc/default/local
+EXPOSE  22
+EXPOSE  80
+CMD     /usr/sbin/sshd -D    
+
+docker build -t runoob/centos:6.7 .
+使用docker images 查看创建的镜像
+docker run -t -i runoob/centos:6.7  /bin/bash
+
+使用 docker tag 命令，为镜像添加一个新的标签。
+docker tag 860c279d2fec runoob/centos:dev
+网络端口映射：
+docker run -d -P training/webapp python app.py
+-P :是容器内部端口随机映射到主机的高端口。
+docker run -d -p 5000:5000 training/webapp python app.py
+-p : 是容器内部端口绑定到指定的主机端口。
+
+docker ps
+指定容器绑定的网络地址，比如绑定127.0.0.1。
+docker run -d -p 127.0.0.1:5001:5002 training/webapp python app.py
+默认都是绑定 tcp 端口，如果要绑定 UDP 端口，可以在端口后面加上 /udp
+docker run -d -p 127.0.0.1:5000:5000/udp training/webapp python app.py
+docker port 命令可以让我们快捷地查看端口的绑定情况。
+docker port adoring_stonebraker 5002
+Docker容器连接
+端口映射并不是唯一把 docker 连接到另一个容器的方法。
+docker有一个连接系统允许将多个容器连接在一起，共享连接信息。
+docker连接会创建一个父子关系，其中父容器可以看到子容器的信息。
+容器命名
+docker run -d -P --name runoob training/webapp python app.py
+Docker安装nginx：
+方法一、通过 Dockerfile构建：
+    首先，创建目录nginx,用于存放后面的相关东西。
+     mkdir -p ~/nginx/www ~/nginx/logs ~/nginx/conf
+    www目录将映射为nginx容器配置的虚拟目录
+    logs目录将映射为nginx容器的日志目录
+    conf目录里的配置文件将映射为nginx容器的配置文件
+    进入创建的nginx目录，创建Dockerfile
+
+    FROM debian:jessie
+
+MAINTAINER NGINX Docker Maintainers "docker-maint@nginx.com"
+
+ENV NGINX_VERSION 1.10.1-1~jessie
+
+RUN apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
+        && echo "deb http://nginx.org/packages/debian/ jessie nginx" >> /etc/apt/sources.list \
+        && apt-get update \
+        && apt-get install --no-install-recommends --no-install-suggests -y \
+                                                ca-certificates \
+                                                nginx=${NGINX_VERSION} \
+                                                nginx-module-xslt \
+                                                nginx-module-geoip \
+                                                nginx-module-image-filter \
+                                                nginx-module-perl \
+                                                nginx-module-njs \
+                                                gettext-base \
+        && rm -rf /var/lib/apt/lists/*
+
+# forward request and error logs to docker log collector
+RUN ln -sf /dev/stdout /var/log/nginx/access.log \
+        && ln -sf /dev/stderr /var/log/nginx/error.log
+
+EXPOSE 80 443
+
+CMD ["nginx", "-g", "daemon off;"]
+
+
+通过Dockerfile创建一个镜像，替换成你自己的名字
+docker build -t nginx .
+
+docker images nginx
+方法二、docker pull nginx
+docker search nginx
+docker pull nginx
+使用nginx镜像
+运行容器
+docker run -p 80:80 --name mynginx -v $PWD/www:/www -v $PWD/conf/nginx.conf:/etc/nginx/nginx.conf -v $PWD/logs:/wwwlogs  -d nginx  
+
+命令说明：
+-p 80:80：将容器的80端口映射到主机的80端口
+--name mynginx：将容器命名为mynginx
+-v $PWD/www:/www：将主机中当前目录下的www挂载到容器的/www
+-v $PWD/conf/nginx.conf:/etc/nginx/nginx.conf：将主机中当前目录下的nginx.conf挂载到容器的/etc/nginx/nginx.conf
+-v $PWD/logs:/wwwlogs：将主机中当前目录下的logs挂载到容器的/wwwlogs
+
+docker ps
+通过浏览器访问
+Docker安装php：
+mkdir -p ~/php-fpm/logs ~/php-fpm/conf
+进入创建的php-fpm目录，创建Dockerfile
+docker build -t php:5.6-fpm .
+docker images
+方法二、docker pull php
+docker search php
+docker pull php:5.6-fpm
+docker run -p 9000:9000 --name  myphp-fpm -v ~/nginx/www:/www -v $PWD/conf:/usr/local/etc/php -v $PWD/logs:/phplogs   -d php:5.6-fpm
+docker ps
+浏览器访问phpinfo()
+PS:此处是通过nginx+php实现web服务，nginx配置文件的fastcgi_pass应该配置为myphp-fpm容器的IP。
+fastcgi_pass  172.17.0.4:9000;
+容器IP的查方法
+docker inspect 容器ID或容器名 |grep '"IPAddress"'
+Docker 安装 MySQL
+方法一、通过 Dockerfile构建
+mkdir -p ~/mysql/data ~/mysql/logs ~/mysql/conf
+docker build -t mysql .
+docker images |grep mysql
+方法二、docker pull mysql
+查找Docker Hub上的mysql镜像
+docker search mysql
+docker pull mysql:5.6
+docker run -p 3306:3306 --name mymysql -v $PWD/conf/my.cnf:/etc/mysql/my.cnf -v $PWD/logs:/logs -v $PWD/data:/mysql_data -e MYSQL_ROOT_PASSWORD=123456 -d mysql:5.6
+-p 3306:3306：将容器的3306端口映射到主机的3306端口
+-v $PWD/conf/my.cnf:/etc/mysql/my.cnf：将主机当前目录下的conf/my.cnf挂载到容器的/etc/mysql/my.cnf
+-v $PWD/logs:/logs：将主机当前目录下的logs目录挂载到容器的/logs
+-v $PWD/data:/mysql_data：将主机当前目录下的data目录挂载到容器的/mysql_data
+-e MYSQL_ROOT_PASSWORD=123456：初始化root用户的密码
+
+docker ps   
+
+
+
+docker run  -v $PWD/myapp:/usr/src/myapp  -w /usr/src/myapp python:3.5 python helloworld.py
+-v $PWD/myapp:/usr/src/myapp :将主机中当前目录下的myapp挂载到容器的/usr/src/myapp
+-w /usr/src/myapp :指定容器的/usr/src/myapp目录为工作目录
+python helloworld.py :使用容器的python命令来执行工作目录中的helloworld.py文件
+
+docker run -p 6379:6379 -v $PWD/data:/data  -d redis:3.2 redis-server --appendonly yes
+
+-p 6379:6379 :将容器的6379端口映射到主机的6379端口
+-v $PWD/data:/data :将主机中当前目录下的data挂载到容器的/data
+redis-server --appendonly yes :在容器执行redis-server启动命令，并打开redis持久化配置
+查看容器启动情况
+
+连接、查看容器
+使用redis镜像执行redis-cli命令连接到刚启动的容器,主机IP为172.17.0.1
+docker run -it redis:3.2 redis-cli -h 172.17.0.1 172.17.0.1:6379> info
+
+使用mongo镜像
+运行容器
+/mongo$ docker run -p 27017:27017 -v $PWD/db:/data/db -d mongo:3.2
+
+-p 27017:27017 :将容器的27017 端口映射到主机的27017 端口
+-v $PWD/db:/data/db :将主机中当前目录下的db挂载到容器的/data/db，作为mongo数据存储目录
+
+使用mongo镜像执行mongo 命令连接到刚启动的容器,主机IP为172.17.0.1
+docker run -it mongo:3.2 mongo --host 172.17.0.1
+
+Student(S#,Sname,Sage,Ssex) 学生表
+Course(C#,Cname,T#) 课程表
+SC(S#,C#,score) 成绩表
+Teacher(T#,Tname) 教师表
+2、查询平均成绩大于60分的同学的学号和平均成绩；
+select S#,avg(score) from sc group by S# having avg(score) >60; 
+1、查询“001”课程比“002”课程成绩高的所有学生的学号；
+select a.S#
+from (select s#,score from SC where C#=’001′) a,
+(select s#,score from SC where C#=’002′) b
+where a.score>b.score and a.s#=b.s#; 
+3、查询所有同学的学号、姓名、选课数、总成绩；
+select Student.S#,Student.Sname,count(SC.C#),sum(score) from Student left Outer join SC on Student.S#=SC.S# group by Student.S#,Sname 
+4、查询姓“李”的老师的个数；
+select count(distinct(Tname))
+from Teacher
+where Tname like ‘李%’; 
+5、查询没学过“叶平”老师课的同学的学号、姓名；
+select Student.S#,Student.Sname
+from Student
+where S# not in (select distinct( SC.S#) from SC,Course,Teacher where SC.C#=Course.C# and Teacher.T#=Course.T# and Teacher.Tname=’叶平’);
+6、查询学过“001”并且也学过编号“002”课程的同学的学号、姓名；
+ select Student.S#,Student.Sname
+ from Student,SC
+ where Student.S#=SC.S# and SC.C#=’001′and exists( Select * from SC as SC_2 where SC_2.S#=SC.S# and SC_2.C#=’002′);
+7、查询学过“叶平”老师所教的所有课的同学的学号、姓名；
+select S#,Sname
+from Student
+where S# in
+(select S#
+from SC ,Course ,Teacher
+where SC.C#=Course.C# and Teacher.T#=Course.T# and Teacher.Tname=’叶平’ group by S# having count(SC.C#)=(select count(C#) from Course,Teacher where Teacher.T#=Course.T# and Tname=’叶平’)); 
+8、查询所有课程成绩小于60分的同学的学号、姓名；
+select S#,Sname
+from Student
+where S# not in (select Student.S# from Student,SC where S.S#=SC.S# and score>60); 
+9、查询没有学全所有课的同学的学号、姓名；
+select Student.S#,Student.Sname
+from Student,SC
+where Student.S#=SC.S#
+group by Student.S#,Student.Sname having count(C#) <(select count(C#) from Course); 
+10、查询至少有一门课与学号为“1001”的同学所学相同的同学的学号和姓名；
+select S#,Sname
+from Student,SC
+where Student.S#=SC.S# and C# in （select C# from SC where S#='1001'）;
+11、删除学习“叶平”老师课的SC表记录；
+Delect SC
+from course ,Teacher
+where Course.C#=SC.C# and Course.T#= Teacher.T# and Tname='叶平'; 
+12、查询各科成绩最高和最低的分：以如下形式显示：课程ID，最高分，最低分
+SELECT L.C# 课程ID,L.score 最高分,R.score 最低分
+FROM SC L ,SC R
+WHERE L.C# = R.C#
+and
+L.score = (SELECT MAX(IL.score)
+FROM SC IL,Student IM
+WHERE IL.C# = L.C# and IM.S#=IL.S#
+GROUP BY IL.C#)
+and
+R.Score = (SELECT MIN(IR.score)
+FROM SC IR
+WHERE IR.C# = R.C#
+GROUP BY IR.C# ); 
+13、查询学生平均成绩及其名次
+SELECT 1+(SELECT COUNT( distinct 平均成绩)
+FROM (SELECT S#,AVG(score) 平均成绩
+FROM SC
+GROUP BY S# ) T1
+WHERE 平均成绩 > T2.平均成绩) 名次, S# 学生学号,平均成绩
+FROM (SELECT S#,AVG(score) 平均成绩 FROM SC GROUP BY S# ) T2
+ORDER BY 平均成绩 desc;
+15、查询每门功成绩最好的前两名
+SELECT t1.S# as 学生ID,t1.C# as 课程ID,Score as 分数
+FROM SC t1
+WHERE score IN (SELECT TOP 2 score
+FROM SC
+WHERE t1.C#= C#
+ORDER BY score DESC )
+ORDER BY t1.C#;
+在面试过程中多次碰到一道SQL查询的题目，查询A(ID,Name)表中第31至40条记录，ID作为主键可能是不是连续增长的列，完整的查询语句如下：
+方法一：
+select top 10 *
+from A
+where ID >(select max(ID) from (select top 30 ID from A order by ID ) T) order by ID
+方法二：
+select top 10 *
+from A
+where ID not In (select top 30 ID from A order by ID)
+order by ID
+mysql> SELECT * FROM table LIMIT 5,10; //检索记录行6-15
+mysql> SELECT * FROM table LIMIT 95,-1; // 检索记录行 96-last.
+mysql> SELECT * FROM table LIMIT 5; //检索前 5 个记录行
+解释存储过程和触发器 答案： 存储过程是一组Transact-SQL语句，在一次编译后可以执行多次。因为不必重新编译Transact-SQL语句，所以执行存储过程可以提高性能。 触发器是一种特殊类型的存储过程，不由用户直接调用。创建触发器时会对其进行定义，以便在对特定表或列作特定类型的数据修改时执行。
+
+数据库日志干什么用，数据库日志满的时候再查询数据库时会出现什么情况。 答案：每个数据库都有事务日志，用以记录所有事务和每个事务对数据库所做的修改。
+
+存储过程和函数的区别? 答案：存储过程是用户定义的一系列SQL语句的集合，涉及特定表或其它对象的任务，用户可以调用存储过程，而函数通常是数据库已定义的方法，它接收参数并返回某种类型的值并且不涉及特定用户表
+
+事务是什么? 答案：事务是作为一个逻辑单元执行的一系列操作，一个逻辑工作单元必须有四个属性，称为 ACID（原子性、一致性、隔离性和持久性）属性，只有这样才能成为一个事务： (1)原子性 事务必须是原子工作单元；对于其数据修改，要么全都执行，要么全都不执行。 (2) 一致性 事务在完成时，必须使所有的数据都保持一致状态。在相关数据库中，所有规则都必须应用于事务的修改，以保持所有数据的完整性。事务结束时，所有的内部数据结构（如 B 树索引或双向链表）都必须是正确的。 (3) 隔离性 由并发事务所作的修改必须与任何其它并发事务所作的修改隔离。事务查看数据时数据所处的状态，要么是另一并发事务修改它之前的状态，要么是另一事务修改它之后的状态，事务不会查看中间状态的数据。这称为可串行性，因为它能够重新装载起始数据，并且重播一系列事务，以使数据结束时的状态与原始事务执行的状态相同。 (4) 持久性 事务完成之后，它对于系统的影响是永久性的。该修改即使出现系统故障也将一直保持。
+
+提高数据库运行效率的办法有哪些? 答案：在给定的系统硬件和系统软件条件下，提高数据库系统的运行效率的办法是： (1) 在数据库物理设计时，降低范式，增加冗余, 少用触发器, 多用存储过程。 (2) 当计算非常复杂、而且记录条数非常巨大时(例如一千万条)，复杂计算要先在数据库外面，以文件系统方式用C++语言计算处理完成之后，最后才入库追加到表中去。这是电信计费系统设计的经验。 (3) 发现某个表的记录太多，例如超过一千万条，则要对该表进行水平分割。水平分割的做法是，以该表主键PK的某个值为界线，将该表的记录水平分割为两个表。若发现某个表的字段太多，例如超过八十个，则垂直分割该表，将原来的一个表分解为两个表。 (4) 对数据库管理系统DBMS进行系统优化，即优化各种系统参数，如缓冲区个数。 (5) 在使用面向数据的SQL语言进行程序设计时，尽量采取优化算法。总之，要提高数据库的运行效率，必须从数据库系统级优化、数据库设计级优化、程序实现级优化，这三个层次上同时下功夫。
+
+通俗地理解三个范式
+
+答案：通俗地理解三个范式，对于数据库设计大有好处。在数据库设计中，为了更好地应用三个范式，就必须通俗地理解三个范式(通俗地理解是够用的理解，并不是最科学最准确的理解)： 第一范式：1NF是对属性的原子性约束，要求属性具有原子性，不可再分解； 第二范式：2NF是对记录的惟一性约束，要求记录有惟一标识，即实体的惟 一性； 第三范式：3NF是对字段冗余性的约束，即任何字段不能由其他字段派生出来，它要求字段没有冗余。没有冗余的数据库设计可以做到。但是，没有冗余的数据库未必是最好的数据库，有时为了提高运行效率，就必须降低范式标准，适当保留冗余数据。具体做法是：在概念数据模型设计时遵守第三范式，降低范式标准的工作放到物理数据模型设计时考虑。降低范式就是增加字段，允许冗余。
+
+简述存储过程的优缺点
+
+优点：
+
+更快的执行速度：存储过程只在创造时进行编译，以后每次执行存储过程都不需再重新编译，而一般SQL语句每执行一次就编译一次,所以使用存储过程可提高数据库执行速度；
+与事务的结合，提供更好的解决方案：当对数据库进行复杂操作时(如对多个表进行Update、Insert、Query和Delete时），可将此复杂操作用存储过程封装起来与数据库提供的事务处理结合一起使用；
+支持代码重用：存储过程可以重复使用,可减少数据库开发人员的工作量；4. 安全性高：可设定只有某此用户才具有对指定存储过程的使用权。
+缺点：
+
+如果更改范围大到需要对输入存储过程的参数进行更改，或者要更改由其返回的数据，则您仍需要更新程序集中的代码以添加参数、更新 GetValue() 调用，等等，这时候估计比较繁琐了。
+可移植性差由于存储过程将应用程序绑定到 SQL Server，因此使用存储过程封装业务逻辑将限制应用程序的可移植性。如果应用程序的可移植性在您的环境中非常重要，则将业务逻辑封装在不特定于 RDBMS 的中间层中可能是一个更佳的选择。
+主键和唯一索引有什么区别?
+
+答案： 相同点:它们都属于实体完整性约束。 不同点: (1) 唯一性约束所在的列允许空值，但是主键约束所在的列不允许空值。 (2) 可以把唯一性约束放在一个或者多个列上，这些列或列的组合必须有唯一的。但是，唯一性约束所在的列并不是表的主键列。 (3) 唯一性约束强制在指定的列上创建一个唯一性索引。在默认情况下，创建唯一性的非聚簇索引，但是，也可以指定所创建的索引是聚簇索引。 (4) 建立主键的目的是让外键来引用。 (5) 一个表最多只有一个主键，但可以有很多唯一键。
+
+简述索引存取的方法的作用和建立索引的原则
+
+作用：加快查询速度。 原则： (1) 如果某属性或属性组经常出现在查询条件中，考虑为该属性或属性组建立索引； (2) 如果某个属性常作为最大值和最小值等聚集函数的参数，考虑为该属性建立索引； (3) 如果某属性经常出现在连接操作的连接条件中，考虑为该属性或属性组建立索引；
+
+什么是基本表?什么是视图?
+
+答案：基本表是本身独立存在的表，在 SQL 中一个关系就对应一个表。 视图是从一个或几个基本表导出的表。视图本身不独立存储在数据库中，是一个虚表
+
+如何提高MySql的安全性
+1.如果MYSQL客户端和服务器端的连接需要跨越并通过不可信任的网络，那么需要使用ssh隧道来加密该连接的通信。
+
+2.使用set password语句来修改用户的密码，先“mysql -u root”登陆数据库系统，然后“mysql> update mysql.user set password=password(‘newpwd’)”，最后执行“flush privileges”就可以了。
+
+3.Mysql需要提防的攻击有，防偷听、篡改、回放、拒绝服务等，不涉及可用性和容错方面。对所有的连接、查询、其他操作使用基于acl即访问控制列表的安全措施来完成。也有一些对ssl连接的支持。
+
+4.设置除了root用户外的其他任何用户不允许访问mysql主数据库中的user表;
+
+5.使用grant和revoke语句来进行用户访问控制的工作;
+
+6.不要使用明文密码，而是使用md5()和sha1()等单向的哈系函数来设置密码;
+
+7.不要选用字典中的字来做密码;
+
+8.采用防火墙可以去掉50%的外部危险，让数据库系统躲在防火墙后面工作，或放置在dmz区域中;
+
+9.从因特网上用nmap来扫描3306端口，也可用telnet server_host 3306的方法测试，不允许从非信任网络中访问数据库服务器的3306号tcp端口，需要在防火墙或路由器上做设定;
+
+10.为了防止被恶意传入非法参数，例如where id=234，别人却输入where id=234 or 1=1导致全部显示，所以在web的表单中使用”或”"来用字符串，在动态url中加入%22代表双引号、%23代表井号、%27代表单引号;传递未检查过的值给mysql数据库是非常危险的;
+
+11.在传递数据给mysql时检查一下大小;
+
+12.应用程序需要连接到数据库应该使用一般的用户帐号，开放少数必要的权限给该用户;
+
+14.学会使用tcpdump和strings工具来查看传输数据的安全性，例如tcpdump -l -i eth0 -w -src or dst port 3306 strings。以普通用户来启动mysql数据库服务;
+
+15.不使用到表的联结符号，选用的参数 –skip-symbolic-links;
+
+16.确信在mysql目录中只有启动数据库服务的用户才可以对文件有读和写的权限;
+
+19.如果不相信dns服务公司的服务，可以在主机名称允许表中只设置ip数字地址;
+
+20.使用max_user_connections变量来使mysqld服务进程，对一个指定帐户限定连接数;
+为什么group by 和order by会使查询变慢
+group by 和 order by操作通常需要创建一个临时表来处理查询的结果，所以如果查询结果很多的话会严重影响性能。
+数据库的约束含义
+数据库约束是防止非法记录的规则， 约束保存在数据字典(data dictionary)中， 约束可以被定义在列级或者表级。
+Oracle中包括一下集中约束：
+1. Not Null – 明确一列数据不能包含null值
+2. Unique – 强制所有数据行不能有重复值
+3. Primary Key – 每一行数据的唯一标示
+4. Foreign Key – 强制一列数据与引用表的外键约束关系
+5. Check – 检查，明确规定一个必须为true的condition
+ddl,dml,dcl的含义：
+DDL :数据定义语言，用于定义和管理 SQL 数据库中的所有对象的语言
+1.CREATE – to create objects in the database 创建数据库对象
+2.ALTER – alters the structure of the database 修改数据库对象
+3.DROP – delete objects from the database 删除数据库对象
+4.TRUNCATE – remove all records from a table, including all spaces allocated for the records are removed
+
+Truncate table 表名 速度快,而且效率高,因为:
+TRUNCATE TABLE 在功能上与不带 WHERE 子句的 DELETE 语句相同：二者均删除表中的全部行。但 TRUNCATE TABLE 比 DELETE 速度快，且使用的系统和事务日志资源少。
+
+DELETE 语句每次删除一行，并在事务日志中为所删除的每行记录一项。TRUNCATE TABLE 通过释放存储表数据所用的数据页来删除数据，并且只在事务日志中记录页的释放。
+
+TRUNCATE TABLE 删除表中的所有行，但表结构及其列、约束、索引等保持不变。新行标识所用的计数值重置为该列的种子。如果想保留标识计数值，请改用 DELETE。如果要删除表定义及其数据，请使用 DROP TABLE 语句。
+
+对于由 FOREIGN KEY 约束引用的表，不能使用 TRUNCATE TABLE，而应使用不带 WHERE 子句的 DELETE 语句。由于 TRUNCATE TABLE 不记录在日志中，所以它不能激活触发器。
+
+TRUNCATE TABLE 不能用于参与了索引视图的表。
+
+5.COMMENT – add comments to the data dictionary 注释
+
+6.GRANT – gives user’s access privileges to database 授权
+
+7.REVOKE – withdraw access privileges given with the GRANT command 收回已经授予的权限
+
+DML:数据操作语言，SQL中处理数据等操作统称为数据操纵语言：
+
+1.SELECT – retrieve data from the a database 查询数据
+2.INSERT – insert data into a table 添加数据
+3.UPDATE – updates existing data within a table 更新数据
+4.DELETE – deletes all records from a table, the space for the records remain 删除
+5.CALL – call a PL/SQL or Java subprogram
+6.EXPLAIN PLAN – explain access path to data
+Oracle RDBMS执行每一条SQL语句，都必须经过Oracle优化器的评估。所以，了解优化器是如何选择(搜索)路径以及索引是如何被使用的，对优化SQL语句有很大的帮助。Explain可以用来迅速方便地查出对于给定SQL语句中的查询数据是如何得到的即搜索路径(我们通常称为Access Path)。从而使我们选择最优的查询方式达到最大的优化效果。
+7.LOCK TABLE – control concurrency 锁，用于控制并发
+
+DCL:数据控制语言，用来授予或回收访问数据库的某种特权，并控制数据库操纵事务发生的时间及效果，对数据库实行监视等
+COMMIT – save work done 提交
+SAVEPOINT – identify a point in a transaction to which you can later roll back 保存点
+ROLLBACK – restore database to original since the last COMMIT 回滚
+SET TRANSACTION – Change transaction options like what rollback segment to use 设置当前事务的特性，它对后面的事务没有影响．
+介绍一下SQL中union,intersect和minus：
+Union用来返回多个查询的结果的总和去掉重复的结果
+
+语法：
+SELECT column1, column2 FROM tablename1
+UNION
+SELECT column1, column2 FROM tablename2;    
+
+Intersect 用来返回多个查询中共同的结果，intersect会忽略null值
+
+语法：
+
+SELECT column1, column2 FROM tablename1
+INTERSECT
+SELECT column1, column2 FROM tablename2;
+
+MUNUS返回出现在第一个查询结果中但是不出现在第二个查询结果的结果集。
+
+语法：
+
+SELECT column1, column2 FROM tablename1
+MINUS
+SELECT column1, column2 FROM tablename2;
+Oracle中delete,truncate和drop的区别：
+Delete命令用来删除表的全部或者一部分数据行，执行delete之后，用户需要提交(commmit)或者回滚(rollback) transaction 来执行删除或者撤销删除， delete命令会触发这个表上所有的delete触发器。
+Truncate删除表中的所有数据， 这个操作不能回滚，也不会触发这个表上的触发器，TRUNCATE比delete更快，占用的空间更小。
+Drop命令从数据库中删除表， 所有的数据行，索引和权限也会被删除，所有的DML触发器也不会被触发，这个命令也不能回滚。
+rowid和rownum有什么不同：
+RowId是一个数据库内部的概念，表示表的一行，用来快速的访问某行数据
+Rownum是结果集的一个功能， 例如select * from Student where rownum = 2 就是得到结果集的第二行。
+视图的作用：
+数据库视图的作用只要有：
+1. 数据库视图隐藏了数据的复杂性。
+2. 数据库视图有利于控制用户对表中某些列的访问。
+3. 数据库视图使用户查询变得简单。
+视图是一个虚拟表，其内容由查询定义。同真实的表一样，视图包含一系列带有名称的列和行数据。但是，视图并不在数据库中以存储的数据值集形式存在。行和列数据来自由定义视图的查询所引用的表，并且在引用视图时动态生成。
+对其中所引用的基础表来说，视图的作用类似于筛选。定义视图的筛选可以来自当前或其它数据库的一个或多个表，或者其它视图。分布式查询也可用于定义使用多个异类源数据的视图。如果有几台不同的服务器分别存储组织中不同地区的数据，而您需要将这些服务器上相似结构的数据组合起来，这种方式就很有用。
+通过视图进行查询没有任何限制，通过它们进行数据修改时的限制也很少。
+2、 谈谈你对索引的理解? 索引是若干数据行的关键字的列表，查询数据时，通过索引中的关键字可以快速定位到要访问的记录所在的数据块，从而大大减少读取数据块的I/O次数，因此可以显著提高性能。 3、 说说索引的组成? 索引列、rowid
+
+Student(S#,Sname,Sage,Ssex) 学生表
+Course(C#,Cname,T#) 课程表
+SC(S#,C#,score) 成绩表
+Teacher(T#,Tname) 教师表
+2、查询平均成绩大于60分的同学的学号和平均成绩；
+select S#,avg(score) from sc group by S# having avg(score) >60; 
+1、查询“001”课程比“002”课程成绩高的所有学生的学号；
+select a.S#
+from (select s#,score from SC where C#=’001′) a,
+(select s#,score from SC where C#=’002′) b
+where a.score>b.score and a.s#=b.s#; 
+3、查询所有同学的学号、姓名、选课数、总成绩；
+select Student.S#,Student.Sname,count(SC.C#),sum(score) from Student left Outer join SC on Student.S#=SC.S# group by Student.S#,Sname 
+4、查询姓“李”的老师的个数；
+select count(distinct(Tname))
+from Teacher
+where Tname like ‘李%’; 
+5、查询没学过“叶平”老师课的同学的学号、姓名；
+select Student.S#,Student.Sname
+from Student
+where S# not in (select distinct( SC.S#) from SC,Course,Teacher where SC.C#=Course.C# and Teacher.T#=Course.T# and Teacher.Tname=’叶平’);
+6、查询学过“001”并且也学过编号“002”课程的同学的学号、姓名；
+ select Student.S#,Student.Sname
+ from Student,SC
+ where Student.S#=SC.S# and SC.C#=’001′and exists( Select * from SC as SC_2 where SC_2.S#=SC.S# and SC_2.C#=’002′);
+7、查询学过“叶平”老师所教的所有课的同学的学号、姓名；
+select S#,Sname
+from Student
+where S# in
+(select S#
+from SC ,Course ,Teacher
+where SC.C#=Course.C# and Teacher.T#=Course.T# and Teacher.Tname=’叶平’ group by S# having count(SC.C#)=(select count(C#) from Course,Teacher where Teacher.T#=Course.T# and Tname=’叶平’)); 
+8、查询所有课程成绩小于60分的同学的学号、姓名；
+select S#,Sname
+from Student
+where S# not in (select Student.S# from Student,SC where S.S#=SC.S# and score>60); 
+9、查询没有学全所有课的同学的学号、姓名；
+select Student.S#,Student.Sname
+from Student,SC
+where Student.S#=SC.S#
+group by Student.S#,Student.Sname having count(C#) <(select count(C#) from Course); 
+10、查询至少有一门课与学号为“1001”的同学所学相同的同学的学号和姓名；
+select S#,Sname
+from Student,SC
+where Student.S#=SC.S# and C# in （select C# from SC where S#='1001'）;
+11、删除学习“叶平”老师课的SC表记录；
+Delect SC
+from course ,Teacher
+where Course.C#=SC.C# and Course.T#= Teacher.T# and Tname='叶平'; 
+12、查询各科成绩最高和最低的分：以如下形式显示：课程ID，最高分，最低分
+SELECT L.C# 课程ID,L.score 最高分,R.score 最低分
+FROM SC L ,SC R
+WHERE L.C# = R.C#
+and
+L.score = (SELECT MAX(IL.score)
+FROM SC IL,Student IM
+WHERE IL.C# = L.C# and IM.S#=IL.S#
+GROUP BY IL.C#)
+and
+R.Score = (SELECT MIN(IR.score)
+FROM SC IR
+WHERE IR.C# = R.C#
+GROUP BY IR.C# ); 
+13、查询学生平均成绩及其名次
+SELECT 1+(SELECT COUNT( distinct 平均成绩)
+FROM (SELECT S#,AVG(score) 平均成绩
+FROM SC
+GROUP BY S# ) T1
+WHERE 平均成绩 > T2.平均成绩) 名次, S# 学生学号,平均成绩
+FROM (SELECT S#,AVG(score) 平均成绩 FROM SC GROUP BY S# ) T2
+ORDER BY 平均成绩 desc;
+15、查询每门功成绩最好的前两名
+SELECT t1.S# as 学生ID,t1.C# as 课程ID,Score as 分数
+FROM SC t1
+WHERE score IN (SELECT TOP 2 score
+FROM SC
+WHERE t1.C#= C#
+ORDER BY score DESC )
+ORDER BY t1.C#;
+在面试过程中多次碰到一道SQL查询的题目，查询A(ID,Name)表中第31至40条记录，ID作为主键可能是不是连续增长的列，完整的查询语句如下：
+方法一：
+select top 10 *
+from A
+where ID >(select max(ID) from (select top 30 ID from A order by ID ) T) order by ID
+方法二：
+select top 10 *
+from A
+where ID not In (select top 30 ID from A order by ID)
+order by ID
+mysql> SELECT * FROM table LIMIT 5,10; //检索记录行6-15
+mysql> SELECT * FROM table LIMIT 95,-1; // 检索记录行 96-last.
+mysql> SELECT * FROM table LIMIT 5; //检索前 5 个记录行
+解释存储过程和触发器 答案： 存储过程是一组Transact-SQL语句，在一次编译后可以执行多次。因为不必重新编译Transact-SQL语句，所以执行存储过程可以提高性能。 触发器是一种特殊类型的存储过程，不由用户直接调用。创建触发器时会对其进行定义，以便在对特定表或列作特定类型的数据修改时执行。
+
+数据库日志干什么用，数据库日志满的时候再查询数据库时会出现什么情况。 答案：每个数据库都有事务日志，用以记录所有事务和每个事务对数据库所做的修改。
+
+存储过程和函数的区别? 答案：存储过程是用户定义的一系列SQL语句的集合，涉及特定表或其它对象的任务，用户可以调用存储过程，而函数通常是数据库已定义的方法，它接收参数并返回某种类型的值并且不涉及特定用户表
+
+事务是什么? 答案：事务是作为一个逻辑单元执行的一系列操作，一个逻辑工作单元必须有四个属性，称为 ACID（原子性、一致性、隔离性和持久性）属性，只有这样才能成为一个事务： (1)原子性 事务必须是原子工作单元；对于其数据修改，要么全都执行，要么全都不执行。 (2) 一致性 事务在完成时，必须使所有的数据都保持一致状态。在相关数据库中，所有规则都必须应用于事务的修改，以保持所有数据的完整性。事务结束时，所有的内部数据结构（如 B 树索引或双向链表）都必须是正确的。 (3) 隔离性 由并发事务所作的修改必须与任何其它并发事务所作的修改隔离。事务查看数据时数据所处的状态，要么是另一并发事务修改它之前的状态，要么是另一事务修改它之后的状态，事务不会查看中间状态的数据。这称为可串行性，因为它能够重新装载起始数据，并且重播一系列事务，以使数据结束时的状态与原始事务执行的状态相同。 (4) 持久性 事务完成之后，它对于系统的影响是永久性的。该修改即使出现系统故障也将一直保持。
+
+提高数据库运行效率的办法有哪些? 答案：在给定的系统硬件和系统软件条件下，提高数据库系统的运行效率的办法是： (1) 在数据库物理设计时，降低范式，增加冗余, 少用触发器, 多用存储过程。 (2) 当计算非常复杂、而且记录条数非常巨大时(例如一千万条)，复杂计算要先在数据库外面，以文件系统方式用C++语言计算处理完成之后，最后才入库追加到表中去。这是电信计费系统设计的经验。 (3) 发现某个表的记录太多，例如超过一千万条，则要对该表进行水平分割。水平分割的做法是，以该表主键PK的某个值为界线，将该表的记录水平分割为两个表。若发现某个表的字段太多，例如超过八十个，则垂直分割该表，将原来的一个表分解为两个表。 (4) 对数据库管理系统DBMS进行系统优化，即优化各种系统参数，如缓冲区个数。 (5) 在使用面向数据的SQL语言进行程序设计时，尽量采取优化算法。总之，要提高数据库的运行效率，必须从数据库系统级优化、数据库设计级优化、程序实现级优化，这三个层次上同时下功夫。
+
+通俗地理解三个范式
+
+答案：通俗地理解三个范式，对于数据库设计大有好处。在数据库设计中，为了更好地应用三个范式，就必须通俗地理解三个范式(通俗地理解是够用的理解，并不是最科学最准确的理解)： 第一范式：1NF是对属性的原子性约束，要求属性具有原子性，不可再分解； 第二范式：2NF是对记录的惟一性约束，要求记录有惟一标识，即实体的惟 一性； 第三范式：3NF是对字段冗余性的约束，即任何字段不能由其他字段派生出来，它要求字段没有冗余。没有冗余的数据库设计可以做到。但是，没有冗余的数据库未必是最好的数据库，有时为了提高运行效率，就必须降低范式标准，适当保留冗余数据。具体做法是：在概念数据模型设计时遵守第三范式，降低范式标准的工作放到物理数据模型设计时考虑。降低范式就是增加字段，允许冗余。
+
+简述存储过程的优缺点
+
+优点：
+
+更快的执行速度：存储过程只在创造时进行编译，以后每次执行存储过程都不需再重新编译，而一般SQL语句每执行一次就编译一次,所以使用存储过程可提高数据库执行速度；
+与事务的结合，提供更好的解决方案：当对数据库进行复杂操作时(如对多个表进行Update、Insert、Query和Delete时），可将此复杂操作用存储过程封装起来与数据库提供的事务处理结合一起使用；
+支持代码重用：存储过程可以重复使用,可减少数据库开发人员的工作量；4. 安全性高：可设定只有某此用户才具有对指定存储过程的使用权。
+缺点：
+
+如果更改范围大到需要对输入存储过程的参数进行更改，或者要更改由其返回的数据，则您仍需要更新程序集中的代码以添加参数、更新 GetValue() 调用，等等，这时候估计比较繁琐了。
+可移植性差由于存储过程将应用程序绑定到 SQL Server，因此使用存储过程封装业务逻辑将限制应用程序的可移植性。如果应用程序的可移植性在您的环境中非常重要，则将业务逻辑封装在不特定于 RDBMS 的中间层中可能是一个更佳的选择。
+主键和唯一索引有什么区别?
+
+答案： 相同点:它们都属于实体完整性约束。 不同点: (1) 唯一性约束所在的列允许空值，但是主键约束所在的列不允许空值。 (2) 可以把唯一性约束放在一个或者多个列上，这些列或列的组合必须有唯一的。但是，唯一性约束所在的列并不是表的主键列。 (3) 唯一性约束强制在指定的列上创建一个唯一性索引。在默认情况下，创建唯一性的非聚簇索引，但是，也可以指定所创建的索引是聚簇索引。 (4) 建立主键的目的是让外键来引用。 (5) 一个表最多只有一个主键，但可以有很多唯一键。
+
+简述索引存取的方法的作用和建立索引的原则
+
+作用：加快查询速度。 原则： (1) 如果某属性或属性组经常出现在查询条件中，考虑为该属性或属性组建立索引； (2) 如果某个属性常作为最大值和最小值等聚集函数的参数，考虑为该属性建立索引； (3) 如果某属性经常出现在连接操作的连接条件中，考虑为该属性或属性组建立索引；
+
+什么是基本表?什么是视图?
+
+答案：基本表是本身独立存在的表，在 SQL 中一个关系就对应一个表。 视图是从一个或几个基本表导出的表。视图本身不独立存储在数据库中，是一个虚表
+
+如何提高MySql的安全性
+1.如果MYSQL客户端和服务器端的连接需要跨越并通过不可信任的网络，那么需要使用ssh隧道来加密该连接的通信。
+
+2.使用set password语句来修改用户的密码，先“mysql -u root”登陆数据库系统，然后“mysql> update mysql.user set password=password(‘newpwd’)”，最后执行“flush privileges”就可以了。
+
+3.Mysql需要提防的攻击有，防偷听、篡改、回放、拒绝服务等，不涉及可用性和容错方面。对所有的连接、查询、其他操作使用基于acl即访问控制列表的安全措施来完成。也有一些对ssl连接的支持。
+
+4.设置除了root用户外的其他任何用户不允许访问mysql主数据库中的user表;
+
+5.使用grant和revoke语句来进行用户访问控制的工作;
+
+6.不要使用明文密码，而是使用md5()和sha1()等单向的哈系函数来设置密码;
+
+7.不要选用字典中的字来做密码;
+
+8.采用防火墙可以去掉50%的外部危险，让数据库系统躲在防火墙后面工作，或放置在dmz区域中;
+
+9.从因特网上用nmap来扫描3306端口，也可用telnet server_host 3306的方法测试，不允许从非信任网络中访问数据库服务器的3306号tcp端口，需要在防火墙或路由器上做设定;
+
+10.为了防止被恶意传入非法参数，例如where id=234，别人却输入where id=234 or 1=1导致全部显示，所以在web的表单中使用”或”"来用字符串，在动态url中加入%22代表双引号、%23代表井号、%27代表单引号;传递未检查过的值给mysql数据库是非常危险的;
+
+11.在传递数据给mysql时检查一下大小;
+
+12.应用程序需要连接到数据库应该使用一般的用户帐号，开放少数必要的权限给该用户;
+
+14.学会使用tcpdump和strings工具来查看传输数据的安全性，例如tcpdump -l -i eth0 -w -src or dst port 3306 strings。以普通用户来启动mysql数据库服务;
+
+15.不使用到表的联结符号，选用的参数 –skip-symbolic-links;
+
+16.确信在mysql目录中只有启动数据库服务的用户才可以对文件有读和写的权限;
+
+19.如果不相信dns服务公司的服务，可以在主机名称允许表中只设置ip数字地址;
+
+20.使用max_user_connections变量来使mysqld服务进程，对一个指定帐户限定连接数;
+为什么group by 和order by会使查询变慢
+group by 和 order by操作通常需要创建一个临时表来处理查询的结果，所以如果查询结果很多的话会严重影响性能。
+数据库的约束含义
+数据库约束是防止非法记录的规则， 约束保存在数据字典(data dictionary)中， 约束可以被定义在列级或者表级。
+Oracle中包括一下集中约束：
+1. Not Null – 明确一列数据不能包含null值
+2. Unique – 强制所有数据行不能有重复值
+3. Primary Key – 每一行数据的唯一标示
+4. Foreign Key – 强制一列数据与引用表的外键约束关系
+5. Check – 检查，明确规定一个必须为true的condition
+ddl,dml,dcl的含义：
+DDL :数据定义语言，用于定义和管理 SQL 数据库中的所有对象的语言
+1.CREATE – to create objects in the database 创建数据库对象
+2.ALTER – alters the structure of the database 修改数据库对象
+3.DROP – delete objects from the database 删除数据库对象
+4.TRUNCATE – remove all records from a table, including all spaces allocated for the records are removed
+
+Truncate table 表名 速度快,而且效率高,因为:
+TRUNCATE TABLE 在功能上与不带 WHERE 子句的 DELETE 语句相同：二者均删除表中的全部行。但 TRUNCATE TABLE 比 DELETE 速度快，且使用的系统和事务日志资源少。
+
+DELETE 语句每次删除一行，并在事务日志中为所删除的每行记录一项。TRUNCATE TABLE 通过释放存储表数据所用的数据页来删除数据，并且只在事务日志中记录页的释放。
+
+TRUNCATE TABLE 删除表中的所有行，但表结构及其列、约束、索引等保持不变。新行标识所用的计数值重置为该列的种子。如果想保留标识计数值，请改用 DELETE。如果要删除表定义及其数据，请使用 DROP TABLE 语句。
+
+对于由 FOREIGN KEY 约束引用的表，不能使用 TRUNCATE TABLE，而应使用不带 WHERE 子句的 DELETE 语句。由于 TRUNCATE TABLE 不记录在日志中，所以它不能激活触发器。
+
+TRUNCATE TABLE 不能用于参与了索引视图的表。
+
+5.COMMENT – add comments to the data dictionary 注释
+
+6.GRANT – gives user’s access privileges to database 授权
+
+7.REVOKE – withdraw access privileges given with the GRANT command 收回已经授予的权限
+
+DML:数据操作语言，SQL中处理数据等操作统称为数据操纵语言：
+
+1.SELECT – retrieve data from the a database 查询数据
+2.INSERT – insert data into a table 添加数据
+3.UPDATE – updates existing data within a table 更新数据
+4.DELETE – deletes all records from a table, the space for the records remain 删除
+5.CALL – call a PL/SQL or Java subprogram
+6.EXPLAIN PLAN – explain access path to data
+Oracle RDBMS执行每一条SQL语句，都必须经过Oracle优化器的评估。所以，了解优化器是如何选择(搜索)路径以及索引是如何被使用的，对优化SQL语句有很大的帮助。Explain可以用来迅速方便地查出对于给定SQL语句中的查询数据是如何得到的即搜索路径(我们通常称为Access Path)。从而使我们选择最优的查询方式达到最大的优化效果。
+7.LOCK TABLE – control concurrency 锁，用于控制并发
+
+DCL:数据控制语言，用来授予或回收访问数据库的某种特权，并控制数据库操纵事务发生的时间及效果，对数据库实行监视等
+COMMIT – save work done 提交
+SAVEPOINT – identify a point in a transaction to which you can later roll back 保存点
+ROLLBACK – restore database to original since the last COMMIT 回滚
+SET TRANSACTION – Change transaction options like what rollback segment to use 设置当前事务的特性，它对后面的事务没有影响．
+介绍一下SQL中union,intersect和minus：
+Union用来返回多个查询的结果的总和去掉重复的结果
+
+语法：
+SELECT column1, column2 FROM tablename1
+UNION
+SELECT column1, column2 FROM tablename2;    
+
+Intersect 用来返回多个查询中共同的结果，intersect会忽略null值
+
+语法：
+
+SELECT column1, column2 FROM tablename1
+INTERSECT
+SELECT column1, column2 FROM tablename2;
+
+MUNUS返回出现在第一个查询结果中但是不出现在第二个查询结果的结果集。
+
+语法：
+
+SELECT column1, column2 FROM tablename1
+MINUS
+SELECT column1, column2 FROM tablename2;
+Oracle中delete,truncate和drop的区别：
+Delete命令用来删除表的全部或者一部分数据行，执行delete之后，用户需要提交(commmit)或者回滚(rollback) transaction 来执行删除或者撤销删除， delete命令会触发这个表上所有的delete触发器。
+Truncate删除表中的所有数据， 这个操作不能回滚，也不会触发这个表上的触发器，TRUNCATE比delete更快，占用的空间更小。
+Drop命令从数据库中删除表， 所有的数据行，索引和权限也会被删除，所有的DML触发器也不会被触发，这个命令也不能回滚。
+rowid和rownum有什么不同：
+RowId是一个数据库内部的概念，表示表的一行，用来快速的访问某行数据
+Rownum是结果集的一个功能， 例如select * from Student where rownum = 2 就是得到结果集的第二行。
+视图的作用：
+数据库视图的作用只要有：
+1. 数据库视图隐藏了数据的复杂性。
+2. 数据库视图有利于控制用户对表中某些列的访问。
+3. 数据库视图使用户查询变得简单。
+视图是一个虚拟表，其内容由查询定义。同真实的表一样，视图包含一系列带有名称的列和行数据。但是，视图并不在数据库中以存储的数据值集形式存在。行和列数据来自由定义视图的查询所引用的表，并且在引用视图时动态生成。
+对其中所引用的基础表来说，视图的作用类似于筛选。定义视图的筛选可以来自当前或其它数据库的一个或多个表，或者其它视图。分布式查询也可用于定义使用多个异类源数据的视图。如果有几台不同的服务器分别存储组织中不同地区的数据，而您需要将这些服务器上相似结构的数据组合起来，这种方式就很有用。
+通过视图进行查询没有任何限制，通过它们进行数据修改时的限制也很少。
+2、 谈谈你对索引的理解? 索引是若干数据行的关键字的列表，查询数据时，通过索引中的关键字可以快速定位到要访问的记录所在的数据块，从而大大减少读取数据块的I/O次数，因此可以显著提高性能。 3、 说说索引的组成? 索引列、rowid
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
