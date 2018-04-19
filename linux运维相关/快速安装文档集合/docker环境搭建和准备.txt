@@ -1,0 +1,543 @@
+#/bin/bash
+#use nsenter to access docker
+
+docker_in(){
+	NAME_ID=$1
+	PID=$(docker inspect -f "{{ .State.Pid }}" $NAME_ID )
+	nsenter -t $PID -m -u -i -n -p
+}
+
+docker_in $1
+
+
+=======================================
+CentOS7  直接yum install -y docker
+
+systemctl start docker
+systemctlstatus docker
+
+ifconfig    
+reboot(内核级别  所以要开机重启一下)
+docker组成：docker client
+	    docker server
+docker组件：image
+	    container
+	    repository
+
+docker镜像管理常用命令：
+搜索镜像：docker search
+获取镜像：docker pull
+查看镜像：docker images
+删除镜像：docker rmi
+容器管理命令：
+
+启动容器：docker run --name -h hostname
+停止容器：docker stop CONTAINER ID
+查看容器：docker ps -a -l
+进入容器：docker exec | docker attach | nsenter
+删除容器：docker rm
+
+从dockerhup上pull镜像下来，pull下来再save
+
+docker pull docker.io/centos
+
+docker save -o centos.tar centos
+
+==========
+
+# 保存镜像到一个tar包; -o, --output="" Write to an file  
+$docker save image_name -o file_path  
+# 加载一个tar包格式的镜像; -i, --input="" Read from a tar archive file  
+$docker load -i file_path  
+  
+# 机器a  
+$docker save image_name > /home/save.tar  
+# 使用scp将save.tar拷到机器b上，然后：  
+$docker load < /home/save.tar  
+
+======
+=====================================================
+设置加速器，或者配置阿里云docker镜像hup。
+
+http://blog.csdn.net/Mr_OOO/article/details/67016309
+========================================================
+运行docker运行之后退出了：
+docker run centos /bin/echo 'hello world'
+
+docker ps -a
+
+
+docker run --name mydocker -t -i centos /bin/bash
+进入bash之后执行命令：
+uname -r
+ps aux
+
+进入一个容器之后，想要退出，直接kil掉/bin/bash  这里打开的docker的bash环境，使用exit也可以退出
+
+这是单用户启动模式，退出以后，容器就关闭了，生产场景中不用这个。
+创建了一个名称为mydocker的容器
+docker start mydocker
+docker attach mydocker
+
+yum install -y util-linux		只是升级相关的功能
+
+获取docker的pid：
+[root@kvm-centos7 ~]# docker inspect -f "{{ .State.Pid }}" mydocker
+4303
+
+1.进入docker：
+多了一个bash，退出以后docker进程不会消失。也就是退出后容器不会停止。
+nsenter -t 4303 -m -u -i -n -p
+写一个脚本实现，脚本加容器别名就能进去 
+
+2.使用exec不进入docker，只执行命令：
+docker exec mydocker whoami
+
+3.docker exec -it mydocker /bin/bash
+
+但是也可以进入docker容器中去：执行/bin/bash,
+-i 意思是打开输入开关   
+-t 意思是 打开一个tty终端。。
+这个命令进入docker容器之后，退出，也不会将docker进程杀掉。
+推荐使用nsenter
+
+删除一个容器：
+docker rm mydocker
+
+导入一个nginx镜像：
+docker search nginx
+
+
+nginx运行在docker容器的前台，运行在后台的话，一起来就挂了：
+docker run -d nginx
+
+docker run --help
+-d让容器运行在后台，并输出id在前台
+
+docker ps
+查看docker的访问日志：
+docker logs 99337da5db8e
+
+docker特点：
+1.环境和代码放在一块
+2.代码流水线管理（开发把代码写完，放到docker容器中去，然后将docker容器放到docker仓库，测试人员将仓库中的docker容器pull下来，运维从docker仓库把这个容器上线）
+4.开发环境配置，开发环境实现一个docker
+5.隔离应用（优势）
+6.整合服务器（资源利用充分）
+7.调试能力（没什么优势）
+8.多用户模式（没什么优势）
+9.快速部署（优势）
+
+面向产品：产品交付
+面向开发：告诉新开发来了，需要安装一个docker，从仓库pull下来就好了。
+面向测试：并发测试，每个测试有自己的虚拟测试环境。。有了docker之后，使用--rm，测试使用完之后，自动删除
+面向运维：环境一致性
+面向架构：实现自动化扩容（微服务）
+
+随机映射：docker run -p
+
+指定映射： -p hostPost:containerPort
+	   -p ip:hostPort:containerPort
+	   -p ip::containerport
+	   -p hostPort:containerPort:udp
+
+当提示没有容器时，kill 容器id号
+docker kill 99337da5db8e。。
+
+端口映射：
+[root@kvm-centos7 ~]# docker run -d -P nginx
+6a0b70f846b0f2331c95ece70115fd6dcfb62d8d32d2927d4ad692d573bfaf59
+[root@kvm-centos7 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                   NAMES
+6a0b70f846b0        nginx               "nginx -g 'daemon off"   6 seconds ago       Up 5 seconds        0.0.0.0:32768->80/tcp   infallible_liskov
+f01115e82e7f        centos              "/bin/bash"              2 hours ago         Up About an hour                            mydocker
+[root@kvm-centos7 ~]# 
+
+查看防火墙的端口映射。
+
+查看nginx的访问日志：
+docker logs dd6430876a41
+
+使用固定的端口映射：
+可以开启多个docker容器。这是开启的第二个容器。
+docker run -d -p 192.168.196.148:81:80 --name mynginx nginx
+
+查看端口映射：
+[root@kvm-centos7 ~]# docker port mynginx
+80/tcp -> 192.168.196.148:81
+
+多次使用-p，可以绑定对个端口：
+docker run -d -p 443:443 -p 82:80 --name nginxv2 nginx 
+
+[root@kvm-centos7 ~]# docker port nginxv2
+443/tcp -> 0.0.0.0:443
+80/tcp -> 0.0.0.0:82
+
+对于数据有很多交换的业务，使用docker可能会影响性能。使用网络，通过iptables的映射:
+
+=====docker数据管理========
+数据卷：
+-v /data
+-v src:dst
+数据卷组：
+--volumes-from
+
+AUSF便携性
+简单来说就是支持将不同的目录挂载到同一个虚拟文件系统下的文件系统
+而且支持为每一个成员目录设置readonly，readwrite，whithout-able权限
+docker在AUFS上构建的contanier image也是如此、
+典型的启动linux运行需要两个FS：bootfs+rootfs
+
+-V 挂在一个数据卷。-d前台运行，--name 制定名称：
+docker run -d --name nginx_volume_test1 -v /data nginx
+
+./docker_login nginx_volume-test1
+
+ls /data
+
+ls
+
+docker inspect -f {{.Mounts}} nginx-volume-test1
+查看挂载目录
+指定目录挂载：
+mkdir -p /data/docker-volume-nginx
+
+docker run -d --name nginx-volume-test2 -v /data/docker-volume-nginx/:/data nginx
+
+进入docker镜像：
+ls /data
+ls
+
+挂载文件：
+docker run -rm -it -v /root/.bash_history:/.bash_history nginx /bin/bash
+
+ls
+cat /.bash_history
+
+使用数据卷，多个docker容器，访问同一个数据区（生成一个容器专门用来挂载目录，其他容器挂载这个容器的数据卷）
+
+docker run -it --name volume-test3 --volumes-from nginx-volume-test2 centos /bin/bash
+
+docker ps
+
+docker run --rm -it --volume-from nfs-test centos /bin/bash
+
+
+============docker镜像构建==========
+手工构建
+dockerfile自动构建
+
+获取容器ID：
+docker ps -a -q
+
+杀死所有容器：
+docker kill $(docker ps -a -q)
+
+删除所有容器：
+docker rm $(docker ps -a -q)
+最好别用这个命令
+
+手动创建镜像：
+docker run --name mynginx -it centos
+
+在docker容器内使用rpm命令装上epel源：
+cd /etc/yum.repos.d
+mv CentOS-Base.repo CentOS-Base.repo.bak
+yum install wget -y
+wget -O CentOS-Base.repo  http://mirrors.163.com/.help/CentOS7-Base-163.repo
+# rpm -ivh http://mirrors.aliyun.com/epel/epel-release-latest-7.noarch.rpm
+
+yum install nginx -y
+
+vi /etc/nginx/nginx.conf
+加上daemon off;
+修改为前台启动（日志文件在/var/log/nginx/下面查看）
+
+docker ps   找到刚刚这个镜像的id
+docker commit -m " My nginx" id dean/mynginx:v1
+查看当前镜像：
+docker images
+会多出来一个镜像
+
+启动镜像：
+docker run --name mynginxv1 -d -p 81:80 dean/mynginx:v1 nginx
+
+自动创建dockerfile：
+
+====================================
+[root@kvm-centos7 nginx]# cat Dockerfile 
+#This Dockerfile
+
+#Base image
+FROM centos
+
+#Maintainer
+MAINTAINER dean.yang 958672189@qq.com
+
+#Commands
+RUN yum install wget -y
+RUN wget -O /etc/yum.repos.d/epel.repo http://mirrors.163.com/.help/CentOS7-Base-163.repo
+RUN echo "daemon off;" >>/etc/nginx/nginx.conf
+ADD index.html /usr/share/nginx/html/index.html
+EXPOSE 80
+CMD ["nginx"]
+
+创建一个dockerfile。
+创建一个index.html与dockerfile同目录
+创建镜像命令：
+docker build -t mynginx:v2 .
+
+docker rmi -f 03040425ab08
+删除构建失败的images
+
+
+==========dockerfile语法解释===========
+FROM 指定基础镜像
+MAINTAINER 指定维护者信息
+RUN 在命令前面加上RUN即可
+ADD copy文件，会自动解压
+WORKDIR 设置当前工作目录
+VOLUME 设置卷，挂载主机目录
+EXPOSE 指定对外的端口
+CMD 指定容器启动后要干的事情
+
+谷歌一下 dockerfile详解
+
+
+先启动才能进去：执行命令
+[root@kvm-centos7 ~]# docker run -d -p 192.168.196.148:82:80 --name mynginxv2 nginx
+
+
+[root@kvm-centos7 ~]# docker inspect -f "{{ .State.Pid }}" mynginx
+4255
+[root@kvm-centos7 ~]# ./docker_login.sh mynginx
+mesg: ttyname failed: No such file or directory
+root@c4bb989d3dc9:/# ls
+bin  boot  dev	etc  home  lib	lib32  lib64  libx32  media  mnt  opt  proc  root  run	sbin  srv  sys	tmp  usr  var
+root@c4bb989d3dc9:/# /etc/init.d/nginx status
+[ ok ] nginx is running.
+root@c4bb989d3dc9:/# quit
+-bash: quit: command not found
+root@c4bb989d3dc9:/# exit
+logout
+================================================
+架构是需要分层的：
+系统层===》运行环境层===》应用服务层
+mkdir /docker
+cd /docker
+mkdir system
+mkdir runtime
+mkdir app
+cd system/
+mkdir centos
+mkdir ubuntu
+mdir centos-ssh
+cd ..
+cd runtime/
+mkdir java
+mkdir php
+mkdir python
+cd ..
+cd app/
+touch xxx.adimn
+touch xxx.api
+tree ..
+================================
+生产场景下安装centos镜像：
+Dockerfile文件：
+#Docker for CentOS
+#Base images
+FROM centos
+#who
+MAINTAINER dean.yang 958672189@qq.com
+#EPEL
+ADD epel.repo /etc/yum.repos.d/
+#Base pkg
+RUN yum install -y wget mysql-devel supervisor git redis tree net-tools sudo psmisc && yum clean all
+应该继续加上python，生产中还要加上python
+生产中的镜像都是带ssh的
+
+docker build -t dean/centos:base .
+
+docker images
+
+python的dockerfile
+#Base image
+FROM dean/centos:base
+
+#Maintainer
+MAINTAINER dean.yang deanyang1996@126.com
+
+#Python env
+RUN yum install -y python-devel python-pip supervisor
+
+#Upgrade pip
+RUN pip install --upgrade pip
+
+=====docker build -t dean/python .
+docker images
+
+
+====================进程管理工具============================================
+supervisor
+是一款python写的工具。
+安装：
+sudo pip install supervisor
+
+生产使用memcache就是用supervisor管理，只要进程挂了就会重新启动
+打开supervisor的配置文件：管理的时候就添加一个.ini文件
+vim /etc/supervisord.conf
+
+[include]
+files = supervisord.d/*.ini
+
+申请一个docker仓库的证书，首先有自己的证书，沃通免费证书:
+编辑Dockerfile文件：
+
+#Docker for CentOS
+#Base images
+FROM centos
+#who
+MAINTAINER dean.yang 958672189@qq.com
+#EPEL
+ADD epel.repo /etc/yum.repos.d/
+#Base pkg
+RUN yum install -y wget openssh-clients openssl-devel openssh-server mysql-devel supervisor git redis tree net-tools sudo psmisc && yum clean all
+
+#For SSHD
+RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key
+RUN ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key
+RUN echo "root:dean" | chpasswd
+
+=====docker bulid -t dean/centos-ssh .
+
+#Base image
+FROM dean/centos-ssh
+
+#Maintainer
+MAINTAINER dean.yang deanyang1996@126.com
+
+#Python env
+RUN yum install -y python-devel python-pip supervisor
+
+#Upgrade pip
+RUN pip install --upgrade pip
+
+======dcoker build -t dean/python-ssh .
+docker images
+
+mkdir shop-api
+cd shop-api
+
+vim app.py
+yum install -y python-pip
+pip install flask
+
+python app.py
+添加一个依赖文件，里面的内容是flask
+vim requirements.txt
+
+添加一个dockerfile
+#Base image
+FROM dean/python-ssh
+
+#Maintainer
+MAINTAINER dean xxx@qq.com
+
+#Python env
+RUN useradd -s /sbin/nologin -M www
+
+#ADD file
+ADD app.py /opt/app.py
+ADD requirements.txt /opt/
+ADD supervisord.conf /etc/supervisord.conf
+ADD app-supervisor.ini /etc/supervisord.d/
+
+#Upgrade pip
+RUN /usr/bin/pip2.7 install -r /opt/requirements.txt
+
+#Port
+EXPOSE 22 5000
+
+#CMD
+#CMD ["/usr/bin/supervisord","-c","/etc/supervisord.conf"]
+注释掉这句话，后面会报错
+
+当前目录下有这些文件：
+app.py app-supervisor.ini Dockerfile requrements.txt supervisord.conf
+
+vim app-supervisor.ini
+
+[program:shop-api]
+command=/usr/bin/python2.7 /opt/app.py
+procee_name=%(programe_name)s
+autostart=true
+user=www
+stdout_logfile=/tmp/app.log
+stderr_logfile=/tmp/app.error
+
+[programe:shop-api]
+command=/usr/sbin/sshd -D
+process_name=%(programe_name)s
+autostart=true
+
+=====docker build -t dean/shop-api .
+docker images
+
+docker ps
+docker ps -a
+实验至此，未成功启动，于是在物理机上执行
+cp app-supervisor.ini /etc/supervisord/
+
+supervisord -c /etc/supervisord.conf
+supervisorctl status
+
+发现依然未启动，查看报错信息
+将app.py复制到/opt中
+less /tmp/app.error
+cp app.py /opt/
+supervisorctl status
+supervisorctl restart shop-api
+supervisorctl status
+
+注释掉上面那句话：
+重构容器：
+docker build -t dean/shop-api:v2 .
+
+docker images
+
+docker run --name shop-api-v2 -it -p 88:5000 -p 8022:22 dean/shop-api:v2 /bin/bash
+
+成功启动，为什么在创建的时候没有启动呢？supervisor在前台启动
+
+在docker镜像中
+ps aux
+supervisord -c /etc/supervisord.conf
+supervisorctl status
+将supervisord.conf中的这个改为true，就可以直接在创建的时候启动
+nodaemon=true
+打开注释CMD
+然后查看88端口和8022端口
+
+
+分层的好处，bulid快速完成等等
+所有的服务都由supervisor启动
+有python和php依赖的，装上这些依赖
+生产怎么使用docker？
+首先在物理机上把服务跑起来，然后将所有的配置文件，
+源文件拷贝到docker的目录下，然后进行构建，启动
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+

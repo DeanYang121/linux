@@ -1,0 +1,19 @@
+方法1：
+[root@oldboy /]# echo stu{01..10}|tr " " "\n"|sed -r 's#(.*)#useradd \1 ; pass=$((RANDOM+10000000)); echo "$pass"|passwd --stdin \1; echo -e "\1 \t `echo "$pass"`">>/tmp/oldboy.log#g'|bash
+ 
+上述命令实际就是再拼N条下面的命令的组合，举一条命令stu01用户的过程拆解如下：
+useradd stu01 ; 
+pass=$((RANDOM+10000000)); 
+echo "$pass"|passwd --stdin stu01; 
+echo -e "stu01        `echo "$pass"`">>/tmp/oldboy.log
+特别说明：如果用shell循环结构会更简单，之所以限制使用循环的目的是锻炼学生的基础命令运用
+能力，学到现在还没学到SHELL循环课程呢
+
+方法4：来源 freeandeasy
+echo stu{01..10} |tr ' ' '\n'|sed -rn 's@^(.*)$@useradd \1 ; echo $RANDOM|md5sum|cut -c 1-8 >/data/\1;cat /data/\1|passwd --stdin \1@gp'|bash
+
+for i in `seq -w 10`
+do
+    useradd oldboy${i} &&\
+    echo `openssl rand -base64 8`|passwd --stdin oldboy${i} &>/dev/null
+done

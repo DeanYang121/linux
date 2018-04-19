@@ -1,0 +1,33 @@
+traceback模块被用来跟踪异常返回信息. 
+如下例所示:
+import traceback
+try:
+    raise SyntaxError, "traceback test"
+except:
+    traceback.print_exc()
+将会在控制台输出类似结果:
+Traceback (most recent call last):
+  File "H:\PythonWorkSpace\Test\src\TracebackTest.py", line 3, in <module>
+    raise SyntaxError, "traceback test"
+SyntaxError: traceback test
+
+import traceback
+import sys
+def tracebacktest():
+    raise SyntaxError, "traceback test"
+try:
+    tracebacktest()
+except:
+    info = sys.exc_info()
+    for file, lineno, function, text in traceback.extract_tb(info[2]):
+        print file, "line:", lineno, "in", function
+        print text
+    print "** %s: %s" % info[:2]
+
+
+控制台输出：
+H:\PythonWorkSpace\Test\src\TracebackTest.py line: 7 in <module>
+tracebacktest()
+H:\PythonWorkSpace\Test\src\TracebackTest.py line: 5 in tracebacktest
+raise SyntaxError, "traceback test"
+** <type 'exceptions.SyntaxError'>: traceback test

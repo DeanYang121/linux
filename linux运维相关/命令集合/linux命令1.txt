@@ -1,0 +1,519 @@
+linux网卡重要文件详细说明及配置
+
+/etc/init.d/network restart  <--ONBOOT=yes 重启网卡
+
+ifdown eth0 &ifup eth0 停止网卡 启动网卡
+
+cat /etc/sysconfig/network-scripts/ifcfg-eth1
+
+BOOTPROTO=none proto取下列值之一：none，引导时不使用协议；static， bootp，dhcp
+
+DNS2=
+
+GATEWAY=10.0.0.254 网关地址，路由器地址
+
+setup 
+
+/etc/resolv.conf 配置DNS服务器 ..配置的信息容易被网卡覆盖清掉
+
+man resolv.conf
+
+linux服务器主机名解析重要文件：
+
+程序员开发测试：
+/etc/hosts:局域网 主机名和IP解析，相当于DNS工具，手动维护
+/etc/hosts 下修改
+
+tabbao：
+172.38.18.23 realtime-search.config-vip.taobao.com
+...
+
+hosts企业里的作用：
+1.开发，产品，测试等人员，用于通过正式的域名测试产品
+2.服务器之间的调用可以用的域名（内部的DNS）,方便迁移
+
+etc/sysconfig/network  改主机名
+
+先hostname xxx 再改etc/sysconfig/network
+
+etc/fstab  设置文件系统挂载信息的文件，使开机能够自动挂载分区
+
+df -h 以人类可读的信息查看磁盘挂载信息
+
+测试手动挂载：
+
+1.创建一个虚拟的块设备
+dd if=/dev/zero of=/dev/sdb1 bs=4906 count=100 虚拟一个盘
+2.格式化
+mkfs.ext4 /dev/sdb1
+3.挂载
+mount -t ext4 -o loop，noexec,noatime /dev/sda1 /mnt/usb
+4.查看
+df -h
+
+挂载的设备  挂载点 FS类型 参数  备份 检查
+
+fsck -A 磁盘检查（不要检查好磁盘），卸载的状态检查
+
+fstab 一旦配置错误，会导致服务器无法启动，如何修复？
+1）开机提示，输入密码 修复
+2）救援模式，resucue
+修改/etc/fstab只读状态，mount -o rw，remount /
+blkid
+
+挂载的设备，可以是设备名或者UUID
+
+
+
+
+挂载：
+1.命令手动
+
+mount -t ext4 -o noexec,noatime /dev/sda1 /mnt/usb
+
+2.etc/fstab
+
+加一行：/dev/sdb1 /mnt/usb ext4 loop,noatime,noexec 0 0
+
+
+
+卸载：
+
+umount /mnt/usb
+
+让一个程序开机启动：
+1）chkconfig(/etc/init.d/sshd)
+2)放入/etc/rc.local
+
+选择建议：/etc/rc.local
+我们把/etc/rc.local,服务器档案文件
+
+所有程序开机启动放入/etc/rc.local,注释。
+
+mount挂载：和fstab问题
+NFS网络文件系统挂载时，网卡还没起，就已经加载fstab了，所以放到rc.local
+
+mount -t nfs 10.0.0.7:/data /mnt
+
+
+/etc/inittab
+设定系统启动时init进程将把系统设置成什么样的runlevel运行级别及加载相关的级别对于启动文件设置
+
+linux开机启动过程介绍。。？？？
+启动
+
+
+rc.local文件详解与fstab区别：
+
+/etc/init.d
+
+使用yum rpm 安装的程序 如果是服务会在/etc/init.d/sshd下面
+
+/etc/xinit.d/
+
+/etc/profile  系统全局环境变量永久生效的文件地址
+/etc/profile.d/  登录以后就会执行这个脚本，脚本所在地
+/etc/motd 登录后显示的登录提醒
+
+/etc/issue 安全优化 。记录用户登录前显示的信息
+/etc/redhat-release
+
+/etc/passwd 
+/etc/shadow
+/etc/group
+/etc/gshadow
+/etc/sudoers
+/etc/
+
+visudo 编辑sudo配置文件（vi /etc/sudoers）-c 检查语法
+
+/usr/src 内核源码存放目录
+
+/var/log/messages  系统故障和软件故障
+/var/secure   安全信息，安全故障，ssh链接日志
+dmesg 系统硬件故障警告，内核打印的错误信息
+
+crontab -l
+
+cat /var/spoll/cron/root定时任务 crond配置文件
+
+
+
+
+proc/memininfo
+/proc/cpuinfo
+/proc/loadavg
+/proc/mounts 设备挂载信息
+/proc/sys/net/ipv4/tcp_tw_reuse
+
+df -h 查看磁盘分区
+
+解释下什么是GPL，GUN，自由软件
+
+如何选择linux操作系统版本
+
+安装系统时如何给linux操作系统分区
+
+描述linux系统的启动过程
+
+解释下linux运行级别
+
+什么是pATH环境变量，作用
+32和64位区别
+
+ls -l|grep '^d' 显示目录
+
+ls -lF|grep /
+
+ls -lF|grep "/$"
+
+-F给不同的文件类型结尾加标示
+
+-p给目录加斜线
+
+find ./ -type d 根据类型查找
+find /oldboy -maxdepth 1 -type d ！-name "oldboy"   ： 查找深度为1
+
+
+tree -Ld 1
+
+ls -lF|awk '/^d/'
+
+ls -lF|sed -n '/^d/p'
+
+ls -r 反转排序 -t按时间排序
+
+grep 3306 /etc/service
+
+vi /etc/profiles
+
+alias grep='grep --color=auto'  --color=auto 给匹配到的字符串加颜色（不是整行）
+
+ls -lrt /etc/
+
+
+find /oldboy/test/ -type f -name "access*.log" -mtime +7(七天以前不包含第七天)|xagrs rm -f(-exec rm -f {} \;不要管道符)
+
+tail -f 文件
+
+tail -F  文件  跟踪文件的变化
+
+grep -n "22" xx.txt对匹配的结果显示行号
+
+grep -n ".*" xx.txt
+
+grep "." xx.txt
+
+awk '{print NR" "$0}' xxx.txt
+
+sed '=' /etc/rsyslog.conf   =表示行号
+
+开机自启动：
+chkconfig --help
+
+chkconfig --level 35 sshd on   35级别上启动
+chkconfig --list sshd
+
+rm -f /etc/rc3.d/S55sshd
+
+ln -s /etc/init.d/sshd /etc/rc3.d/K25sshd
+
+
+chkconfig：
+
+chkconfig --add oldboy  添加命令
+
+touch oldboy 
+vi oldboy  写脚本/etc/init.d/oldboy
+
+/etc/init.d/oldboy start 让程序当前运行
+
+chkconfig管理脚本要求：只是管理下一次开机运行级别上是否启动某服务
+
+1.执行/etc/init.d/oldboy restart 格式服务正常
+
+
+运行级别：cat /etc/inittab
+
+0关机模式
+1单用户模式
+2无NFS的多用户模式
+3文本模式
+4
+5
+6
+
+
+tar
+  z压缩
+  c创建文件
+  v处理过程中输出相关信息
+  f对普通文件
+  tf 查看压缩包内容
+  X排除
+
+ tar zcvf 框  苹果
+
+tar zcvf 随意路径/etc.tar.gz 相对路径
+
+tar zcvf a.tar.gz --exclude=oldboy/wode.gz --exclude=oldboy/wode1.gz ./oldboy/
+
+tar zcvfX a.tar.gz paichu.list ./oldboy/
+
+  x 解压
+tar xf a.tar.gz 2>/dev/null
+
+tar xf a.tar.gz -C /tmp/ 解压到指定目录
+  -p 保持文件属性
+  -P 用绝对路径打包
+
+
+tar jxvf b.tar.bz 解压.bz
+
+gzip/unzip zip 压缩解压缩
+
+把oldboy下面的所有文件打包
+
+find /oldboy/ -type f|xagrs tar zcvf oldboy.tar.gz   找到的结果一次打包
+
+暂时不用这个方法：会对每一个文件打包一次，并且覆盖 find /oldboy/ -type f -exec xargs tar zcf oldboy3,tar.gz {} \;
+
+tar zcvf /root/oldboy.tar.gz 'find /oldboy -type f' 找到的结果一次打包
+
+cut 切割，简单的取列命令 -d 指定分隔符 -f 数字 取第几列
+    -c按字符取
+cut -d" " -f3,6 oldboy.txt
+
+cut -c 6--11 oldboy.txt
+
+cut -c 6-11,20- oldboy.txt
+
+sed 's#,# #g' oldboy.txt|cut -d " " -f3,6
+
+awk -F "," '{print $1" "$2}' oldboy.txt|awk '{print $3" "$6}'
+
+awk -F "[, ]" '{print $3" "$6}' oldboy.txt awk的多分隔符用法...老男孩搜索深入浅出
+
+egrep -o "oldboy|490000448" oldboy.txt|sed "s#"\n"# #g"
+
+egrep -o "oldboy|490000448" oldboy.txt|tr "\n" " "
+
+wc -l /etc/services 显示行数
+
+cat -n /etc/services|tail -1
+
+awk '{print NR $0}' /etc/services|tail -1
+
+grep -n "." /etc/services|tail -1
+
+wc 打印行号，字节数 -l行数（企业案例）
+
+netstat -lntup|grep ssh 查看服务是否打开
+
+netstat -lntup|grep ssh|wc -l 判断是否为2 开启
+
+grep -E "3306|1521" /etc/services
+
+egrep  "3306|1521" /etc/services
+
+egrep --color=auto  "3306|1521" /etc/services
+
+专注力，一次只将精力放在一个事情上面
+
+
+ls -lhi 
+   i 是inode 
+
+
+25091 -rw-r--r--. 1 root root 81 4月 15 2016 xx.txt
+
+第一列：inode,文件的唯一标示，索引节点编号：它是文件或目录，在磁盘文件里的唯一标识，linux读取文件首先要读取到这个索引节点
+书的目录。
+
+第二列：第一个字符代表文件字符 - 普通文件 d 目录 rw-r--r-- r读 w写 e 执行 . SELINUX相关
+
+第三列：文件的硬链接数。硬链接是文件的又一个入口
+
+第四列：文件对应的属主或者用户
+
+第五列：文件对应的属组或用户组（团体）
+
+第六列：文件内容大小
+
+第789列：时间
+
+最后一列：文件名
+
+磁盘格式化：第一部分inode（很多个）
+            第二部分block（很多个）
+
+而inode就是用来存储文件属性信息，还有指向文件实体的指针的功能，但是inode里唯独不包含文件名
+
+
+dump2fs /dev/sda3|grep -i “innode size” 只针对ext系统  查文件系统
+
+df -i 查看挂载的磁盘信息
+df -h 查看使用量，block
+
+
+
+企业案例：如果向磁盘写入数据发现不能写入空间已满，而df -h 发现没满
+
+可能是inode耗尽了 df -i 查看是否被耗尽
+
+C5企业工作中邮件临时队列/var/spool/clientmquene 这里很容易被大量小文件耗尽inode
+
+C6 没安装sendmail 改装postfix服务，存放地点/var/spool/postfix/maildrop
+
+手动清理方法：find /var/spool/clientmqueue/ -type f|xargs rm -f
+              find /var/spool/postfix/maildrop/ -type f|xargs rm -f
+定时清理的方法为：将上述命令写成脚本，然后做定时任务，每天晚上0点执行一次
+
+mkfs.ext4 -b 2048 -I 256 /dev/sdb 修改inode
+
+
+生产文件系统类型及block 的大小选择：...百度.
+
+
+企业面试题：
+一个100M的磁盘分区100000K的磁盘分区，分别写入1K的文件或写入1M的文件，分别可以写多少个？
+
+文件类型：-普通文件f（纯文本，二进制，数据文件，查看用file xxx）  d目录 l链接文件（软链接，快捷方式） b块设备（硬盘，光驱） 
+c字符文件串行接口设备  s socket文件（通信相关） 
+
+
+linux下扩展名的作用：
+
+源码 .tar tar.gz .tgz .zip tar.bz
+.sh 表示shell脚本文件
+.pl表示perl语言文件
+.py
+.conf系统服务配置文件
+.rpm表示rpm安装包文件
+
+
+硬链接  软连接：ln 命令创建硬连接  ln -s创建的是软连接
+ln 源文件 目标文件
+
+
+硬链接通过inode索引节点进行连接、多个文件名指向同一个索引节点，是正常允许的，这种情况的文件就成为硬链接。作用允许一个文件有多个入口，防止误删数据源
+
+ext2 3 4文件系统中，只要文件还有一个以上的硬链接，至删除其中一个硬链接，不会删除文件实体数据，只删除这个文件的硬链，当所有硬链接都删除完毕，就文件消失。。静态文件的删除
+
+静态是没有进程调用的
+
+
+文件删除：
+
+i_link 文件的硬链接数量
+i_count 引用计数（有一个程序使用i_count加1）
+文件删除的条件：
+
+i_link =0 and i_count=0
+
+
+
+挂载新硬盘：
+
+fdisk -l 查看新增的磁盘
+
+格式化：mkfs -t ext4 /dev/sdb
+
+tune2fs -e -1 /etc/sdb  -1不让他检查
+
+umount /app/log
+
+mount -t ext4 -o defaults /dev/sdb /app/log
+
+find ./ -type f|xargs rm -f大量文件的删除
+
+企业案例：磁盘满了web服务
+
+setenforce 0  关闭seLinux  否则很多问题
+
+文件满了，删除之后空间还是没释放，解决方法 ，重启服务
+
+/etc/init.d/httpd reload
+
+curl http：//127.0.0.1 访问网站的命令
+
+lsof|grep delete
+
+ls -la 显示隐藏文件a  以点开头的文件还代表隐藏文件
+
+目录的硬链接：
+
+不允许使用ln来创建
+
+
+目录的软连接在老男孩的生产场景中更经常使用
+
+
+企业生产目录软连接作用：
+1.编译软件时指定版本号，访问时希望去掉版本号，可以设置如啊软连接到编译的路径。所有程序都访问软连接文件
+当软件升级高版本后，只需删除链接文件重建到高版本路径的软连接即可
+
+2.PHP 企业代码发布的时，需要把所有代码传到一个新的临时目录或者新的站点目录，发布时要么一个mv，也可以重建软连接指向到这个新的临时目录或者站点目录
+
+3.不方便目录移动，使用ln -s。
+
+
+
+用户的角色是通过UID和GID识别的：
+
+UID 用户ID
+
+GID 组ID
+
+用户分为三类：
+1.超级用户
+
+whoami 查看用户
+
+root uid=0 gid=0 UID为0的就是超级用户
+
+2.虚拟用户
+
+存在linux中，满足文件或者程序运行的需要而创建的。不能登录使用，傀儡
+
+UID GID 1-499 结尾都sbin结尾的
+
+etc/passwd  修改UID 和用户信息
+
+3.普通用户
+管理员root创建的用户，UID GID 500-65535
+
+groupadd mysql
+
+useradd mysql
+
+useradd -g mysql mysql -s /sbin/nologin
+
+
+用户，用户组的配置文件：
+
+/etc/shadow /etc/group用户组配置文件 /etc/gshadow /etc/passwd
+
+
+ls -l --time-style=long-iso 显示友好的长时间格式
+
+
+stat /etc/hosts显示文件的时间
+
+Access：访问时间 find -atime
+Modify：修改时间，内容发生变化 find -mtime
+Change：变化时间，包含Modify，权限，属主，用户组 find -ctime
+
+删除文件，需要上一级目录的权限，因为保存在上一级目录的block
+
+
+
+
+
+
+
+
+
+
+
+

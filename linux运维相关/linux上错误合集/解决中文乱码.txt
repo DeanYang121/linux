@@ -1,0 +1,5 @@
+locale    查看linux支持什么字符集，如果不支持中文，zh_CN.UTF-8
+yum groupinstall chinese-support
+export LANG=zh_CN.UTF-8
+vim /etc/sysconfig/i180
+

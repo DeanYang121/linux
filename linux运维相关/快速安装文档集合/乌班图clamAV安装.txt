@@ -1,0 +1,19 @@
+安装ClamAV
+sudo apt-get install clamav
+
+
+先临时停止 clamav-freshclam 服务 sudo systemctl stop clamav-freshclam
+更新完后再启动之 sudo systemctl start clamav-freshclam
+
+升级我的病毒库
+运行 sudo  freshclam
+
+报错：解决办法
+Open /etc/freshclam.conf with sudo in an editor. What do you have for the DatabaseMirror directives? In mine, I use
+
+
+DatabaseMirror db.us.clamav.net
+DatabaseMirror db.de.clamav.net
+DatabaseMirror db.jp.clamav.net
+
+

@@ -1,0 +1,125 @@
+alter database cmdb_dj character set utf8;
+http://www.cnblogs.com/hubavyn/p/4359315.html
+http://www.blogjava.net/Alpha/archive/2007/07/23/131912.html
+
+
+1.在备份的sql文件的开头，加入：set names latin1（系统和库表的字符集） 以此来保证导入进去的数据不会乱码，接着在命令行使用source 命令恢复
+
+2.mysql -uroot -p密码 --default-character-set=latin1 表名 < /opt/bak_wordpress.sql，，接着
+通过-e参数在mysql数据库外查看结果：mysql -uroot -p'密码' -e "set names latin1,select * from oldboy.student"
+
+五种方法解决乱码问题：
+
+法一：登录mysql，在mysql的命令行，先做set names latin1 然后再执行更新语句或执行语句文件（临时的）
+
+法二：在sql文件中指定set names latin1 然后登录mysql，导入 或者 在linu命令行导入
+
+法三：通过指定mysql命令的字符集参数实现--default-character-set=latin1
+
+mysql -uroot -p'密码' -e "set names latin1,select * from oldboy.student" oldboy <test.sql
+
+法四：更改my.cnf客户端模块的参数，永久生效。
+[client]
+
+default-character-set=latin1
+提示，无需重启服务，退出重新登录就生效
+
+更改服务端字符集参数的简单办法：
+[mysqld]
+default-character-set=latin1适合5.1及以前
+character-set-server=latin1适合5.5
+
+linux系统的字符集也要匹配一致：
+cat /etc/sysconfig/i18n
+LANG="zh_CN.utf8"
+
+登录mysql查看校对规则：
+show character set；
+显示utf8，utf8_general_ci等
+
+create database test DEFAULT CHARACTER SET UTF8 COLLATE  utf8_general_ci;
+
+mysql字符集的介绍：
+         长度
+GBK      2
+UTF-8    3 中英文混合的环境，建议使用此字符集
+latin1   1 mysql默认的字符集
+utf8mb4  4 UTF-8 unicode
+
+如果处理各种各样的文字，发布到不用语言国家地区，应选unicode，对mysql来说就是UTF-8
+
+处理一定互联网业务，可能要用utf8mb4
+
+如果全是中文，并且数据量很大，使用GBK
+
+mysql -uroot -p'passwd' -e "show character set;"|egrep "gbk|utf8|latin1"|awk 'print $0'
+
+查看字符集和校对规则
+
+查看当前系统字符集设置：
+show variables like 'character_set%'
+
+默认情况下character_set_client（客户端字符集） ,character_set_connection（连接字符集）,character_results（结果字符集）三者的字符集和系统的字符集应该一致。
+既为：cat /etc/sysconfig/i18n
+这三个字符集，随着系统字符集的改变而改变。
+echo $LANG
+
+character_set_databases(数据库字符集，配置文件指定或建表建库指定)
+character_set_server(服务器字符集，配置文件指定或者建表建库指定)
+
+在字符集不对的时候插入数据出现乱码，之后通过set names 设置也改不过来
+
+登录mysql中，mysql -uroot  -p 123456  --default-character-set=
+
+然后，在别人创建的数据库中，先使用set names "字符集",指定自己的数据字符集 再插入
+
+也可以使用包含在sql文件中的set names，也可以在插入之前执行命令
+
+总结：set naems latin1 以及mysql 指定字符集登录的操作，都是改变mysql客户端的client，connection，result三个参数
+从而解决插入中文乱码问题，这个操作也可以通过更改my。cnf配置客户端模块的参数来实现，并且永久生效。
+
+问题1：
+如何更改生产mysql数据库库表的字符集？
+现将数据导出，经过修改字符集后重新导入后才能完成
+
+通过alter database character set '' 只对新创建的表或记录生效
+###################################################################################
+模拟将latin1字符集的数据库修改成utf8的字符集进行连接
+###################################################################################
+mysqldump -uroot -p --deafult-character-set=latin1 -d dbname >alltable.sql
+
+-d :只导表结构
+
+编辑alltable.sql  将latin改成utf8
+
+确保数据不再更新，导出所有数据：
+mysqldump -urot -p --quick --no-create-info --extended-insert --default-character-set=latin1 dbname >alldata.sql
+
+--quick :用于转存储大的表，强制mysqldump从服务器一次一行的检索数据而不是检索所有行，并输出前cache到内存中
+--no-create-info:不创建create table 语句
+--extend-insert：使用包括几个values列表的多行insert语法，这样文件更小，IO也更小，导入数据时会非常快
+--default-character-set = latin1 按照原有的字符集导出数据，这样导出的文件中，所有中文都是可见的，不会保存成乱码，
+
+打开alldata.sql. 将set names latin1 修改成set names utf8
+
+创建表：
+mysql -uroot -p dbname <alltable.sql
+导入数据：
+mysql -uroot -p dbname <alldata.sql
+
+已有字符集的修改不能直接通过“alter database character set *”
+上述详细步骤
+总结：latin1  改成 utf8
+1.创建库及表的语句导出,sed批量修改改为utf8
+2.导出所有数据
+3.修改mysql服务端和客户端编码为utf8
+4.删除原有的库表及数据
+5.导入新的建库及建表的语句
+6.导入MySQL的数据
+
+
+
+
+
+
+

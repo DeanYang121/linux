@@ -1,0 +1,24 @@
+重新编译添加模块
+
+原已经安装好的nginx，现在需要添加一个未被编译安装的模块
+举例说明：安装第三方的ngx_cache_purge模块（用于清除指定URL的缓存）
+nginx的模块是需要重新编译nginx，而不是像apache一样配置文件引用.so
+
+1.wget http://labs.frickle.com/files/ngx_cache_purge-2.0.tar.gz
+ tar -zxvf ngx_cache_purge-2.0.tar.gz
+ cd /data0/software/nginx-1.1.10
+
+2.查看nginx编译安装时的命令，安装了哪些模块
+/usr/local/webserver/nginx/sbin/nginx -V
+
+3.加入需要安装的模块，重新编译
+./configure --user=www --group=www --add-module=../ngx_cache_purge-2.0 --prefix=/usr/local/webserver/nginx --with-http_stub_status_module --with-http_ssl_module
+
+make，不要make install会覆盖
+make
+
+4. 替换nginx二进制文件:
+cp /app/nginx/sbin/nginx /app/nginx/sbin/nginx.bak
+cp ./objs/nginx /app/nginx/sbin/  
+
+5.启动nginx

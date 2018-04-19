@@ -1,0 +1,6 @@
+年初时写了个系统备份的脚本，主要使用rsync工具见（rsync远程同步备份数据(ssh方式）)，但前阵子我做备份系统恢复演习时才发现，我的rsync已经很久都没有sync成功了。我本来是采用密钥交换的方式来完成ssh中的验证，但可能由于主机的Key有变化，每次ssh连接（或rsync）时就会有提示：The authenticity of host *** can’t be established ，需要输出一个“yes”的交互。
+对于这个提示，我的脚本中一开始没有预知，所以没有做判断和处理（用expect也是容易处理的），所以我决定去掉这样的提示（关于宿主机的检查）。
+1. 使用ssh连接远程主机时加上“-o StrictHostKeyChecking=no”的选项，如下：
+	
+ssh  -o StrictHostKeyChecking=no  192.168.xxx.xxx
+

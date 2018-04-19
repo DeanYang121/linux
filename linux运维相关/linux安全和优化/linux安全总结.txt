@@ -1,0 +1,3 @@
+linux历史记录不记录敏感历史命令：
+#HISTCONTROL=ignorespace
+

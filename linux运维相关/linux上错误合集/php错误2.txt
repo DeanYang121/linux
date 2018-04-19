@@ -1,0 +1,58 @@
+
+cannot find -lltdl ,编译php又出错了
+php在make过程中出现“usr bin ld cannot find lltdl”错误，详细错误如下：
+
+    /usr/bin/ld: cannot find -lltdl
+    collect2: ld returned 1 exit status
+    make: *** [libphp5.la] Error 1
+
+在Google上搜了好久，终于找到答案，原来是在编辑php时添加的“–with-mcrypt”选项造成。所以“usr bin ld cannot find lltdl”错误解决办法如下：
+
+1、如果不需要mcrypt，那么编辑php时去掉该选项，然后再make、make install。
+
+2、如果需要mcrypt，那么需要安装libltdl
+
+libltdl在libmcrypt软件包中就有，具体过程：
+
+    #cd /software/libmcrypt-2.5.8/libltdl
+
+    #./configure –enable-ltdl-install
+
+    #make
+
+    #make install
+
+这个时候又出现了新的问题erroe:while loading shared libraries: libltdl.s,: cannot open shared object file: No such file or directory
+
+然后我有
+
+#ln -s /usr/lib/libltdl.so /usr/lib/libltdl.so.3
+
+make install
+
+出现了cp: cannot stat `ext/phar/phar.phar': No such file or directory
+ 
+
+于是我又: cd  ext/phar/
+
+ls -l
+
+结果发现没有phar.phar 这个文件！！于是我怀疑是phar.php ，
+
+cp ./phar.php  ./phar.phar
+
+make install
+
+搞定
+
+
+
+=================
+===============
+php安装错误：error while loading shared libraries: libltdl.so.3
+
+修改/etc/ld.so.conf文件
+追加如下一句（就这句，不要加别的）
+/usr/local/lib
+
+然后执行ldconfig命令，再编译

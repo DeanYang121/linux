@@ -1,0 +1,108 @@
+/data/3308/mysql restart
+Restarting MySQL...
+Stoping MySQL...
+/application/mysql/bin/mysqladmin: connect to server at 'localhost' failed
+error: 'Can't connect to local MySQL server through socket '/data/3308/mysql.sock' (111)'
+Check that mysqld is running and that the socket: '/data/3308/mysql.sock' exists!
+
+
+尝试启动3308端口的mysql实例，报错。
+解决办法：
+cd 3308
+rm -f mysql.sock 
+
+主从同步配置：
+3306主
+3307从
+
+vim /data/3306/my.cnf 
+在mysqld下面添加：
+log-bin = /data/3306/mysql-bin
+server-id = 1----》唯一id
+
+egrep "server-id|log-bin" /data/3306/my.cnf -----》检查
+
+log-bin = /data/3306/mysql-bin
+server-id = 1
+
+/data/3306/mysql restart
+mysql -uroot -p -S /data/3306/mysql.sock 
+show variables like 'server_id'
+show variables like 'log_bin';
+grant replication slave on *.* to 'rep'@'192.168.0.%' identified by 'yy631562'; 添加一个同步的用户并授权
+flush privileages;
+select user,host from mysql.user where user='rep';
+show gants for rep@'192.168.0.%';
+flush table with read lock;   ----》锁表
+
+show variables like '%timeout%';
+
+mysql> show master status;
++------------------+----------+--------------+------------------+
+| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB |
++------------------+----------+--------------+------------------+
+| mysql-bin.000004 |      335 |              |                  |
++------------------+----------+--------------+------------------+
+
+从新打开一个窗口，这个窗口不关闭。
+
+mysql -uroot -p'yy631562' -S /data/3306/mysql.sock -e "show master status"
+mkdir /server/backup/ -p 
+mysqldump -uroot -p'yy631562' -S /data/3306/mysql.sock --events -A -B |gzip >/server/backup/mysql_bak.$(date +%F).sql.gz
+ls -l /server/backup/
+
+在主库：
+unlock tables;
+quit
+
+从库：
+vim /data/3307/my.cnf 
+在mysqld下添加下面的参数
+egrep "server-id|log-bin" /data/3307/my.cnf 
+#log-bin = /data/3307/mysql-bin
+server-id = 3
+/data/3307/mysql restart
+mysql -uroot -p"yy631562" -S /data/3307/mysql.sock 
+show variables like "log_bin";
+show variables like "server_id";
+cd /server/backup/
+gzip -d mysql_bak.2017-02-19.sql.gz 
+mysql -uroot -p'yy631562' -S /data/3307/mysql.sock < mysql_bak.2017-02-19.sql 
+mysql -uroot -p"yy631562" -S /data/3307/mysql.sock 
+
+CHANGE MASTER TO  
+MASTER_HOST='192.168.0.118', 
+MASTER_PORT=3306, 
+MASTER_USER='rep', 
+MASTER_PASSWORD='yy631562', 
+MASTER_LOG_FILE='mysql-bin.000004', 
+MASTER_LOG_POS=335;
+
+QUIT
+
+cat /data/3307/data/master.info 
+18
+mysql-bin.000004
+335
+192.168.0.118
+rep
+yy631562
+3306
+60
+0
+0
+1800.000
+0
+mysql -uroot -p"yy631562" -S /data/3307/mysql.sock -e "start slave;"
+mysql -uroot -p"yy631562" -S /data/3307/mysql.sock -e "show slave status\G;"
+mysql -uroot -p"yy631562" -S /data/3307/mysql.sock -e "show slave status\G;"|egrep "IO_Running|SQL_Running|_Behind_Maste
+r"
+Slave_IO_Running: Yes
+Slave_SQL_Running: Yes
+Seconds_Behind_Master: 0
+测试：
+mysql -uroot -p"yy631562" -S /data/3306/mysql.sock 
+create database dena;
+quit
+登录3307端口查看。
+

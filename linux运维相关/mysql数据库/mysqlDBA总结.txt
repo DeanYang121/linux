@@ -1,0 +1,279 @@
+企业怎么创建数据库：
+根据开发的程序确定字符集（建议UTF8）
+编译时候指定字符集
+然后建库的时候默认创建即可，create database oldboy
+
+mysql 5.1以及以前 默认引擎myisam，5.5默认引擎innodb
+
+3.编译的时候没有指定字符集或者指定了和程序不同的字符集，如何解决？
+指定字符集创建数据库即可.
+create database yangdi_utf8 default character set utf8 collate utf8_general_ci;
+
+数据库能支持创建库的字符集：
+-dextra_charsets=gbk,utf8,gb2312,ascii
+
+数据库升级：
+先将数据导出来，然后重新安装数据库
+
+mysql可授权的权限有哪些？
+mysql -uroot -p123456 -e "show grants for root@localhost"|grep -I grant|tail -1|tr  ','  '\n'>all.txt   (tr 替换命令，将第一个，替换成第二个)
+select * from mysql.user\G;
+
+========
+字符集统一
+========
+
+调整系统字符集：
+vi  /etc/sysconfig/i18n
+LANG="zh_CN.UTF-8"
+
+修改之后，CRT也要修改字符集
+
+数据库乱码原因是字符集不一致：
+编译时指定了特定的字符集，以后创建数据库的时候就不用指定字符集了
+-default_charset=utf8 \
+-default_collation=utf8_general_ci \
+
+
+登录mysql数据库：
+mysql -uroot -p
+mysql -uroot -p '密码' 非脚本一般不这么做
+多实例登录方法：
+mysql -uroot -p -S /data/3306/mysql.sock
+mysql -uroot -p -S /data/3307/mysql.sock
+多实例远程连接无需指定sock路径？？
+mysql -uroot -p -h 127.0.0.1 -P3306
+
+关闭数据库：
+/etc/init.d/mysqld  stop
+
+强制关闭数据库方法：
+killall mysqld
+pkill mysqld
+killall -9 mysqlld
+kill -9 mysqld
+万不得已，尽量不要强制停止
+
+优雅关闭数据库的方法：
+1.mysqladmin -uroot -p密码 shutdown
+2.自带脚本/etc/init.d/mysqld stop
+3.kill信号的方法：kill -USR2  `cat path/pid`
+推荐前两个方法
+杀数据库可能导致重启不来
+
+mysql密码丢失怎么找回：
+1.首先停止mysql
+/etc/init.d/mysqld stop
+2.在my.cnf中添加参数--skip-grant-tables启动mysql。忽略授权登录验证
+或者：mysqld_safe --skip-grant-tables --user=mysql& 加参数登录
+mysql  登录时空密码
+
+多实例mysql启动修改丢失root密码方法：
+killall mysql
+mysqld_safe --default-file=/data/3306/my.cnf --skip-grant-tables &
+mysql -uroot -p -S /data/3306/mysql.sock 登录时空密码
+
+然后利用sql语句修改root密码
+
+CRT配色方案：测试环境和正式环境的CRT颜色不同，登录以后先查看ip地址，不管正式还是测试都是先备份再操作：
+mysql提示符修改：
+命令行改变提示符：mysql-> prompt   \u@yangdi \r:\m:\s->  （\u:系统用户）
+配置文件修改登录提示符：my.cnf配置文件中[mysql]模块下添加内容，注意不是[mysqld],保存后就生效，重新登录就好。
+添加内容：prompt=\\u@yangdi \\r:\\m:\\s->          (\避免转义问题) 
+
+善用mysql的帮助命令help
+linux的帮助help（内置命令的帮助）
+help show database;
+help drop database;
+help use;
+help revoke;
+
+为mysql登录用户增加密码：
+mysqladmin -uroot password “123456”   ====>没有密码的用户设置密码命令
+mysqladmin -uroot -p‘123456’ -S /data/3306/mysql.sock  ===>适合多实例方式
+
+修改root密码：命令行外修改
+mysqladmin -uroot  -p'oldpasswd'  password ‘new’
+mysqladmin -uroot  -p'oldpasswd' password'newpasswd' -S /data/3306/mysql.sock  ===>多实例方式
+
+修改管理员密码：sql语句修改法
+update mysql.user set password=PASSWORD（“newpasswd”）where user='root' and host='localhost';
+flush privileges; （必须指定条件）此方法适合于密码丢失后通过--skip-grant-tables参数启动数据库修改密码（my.cnf中加入参数）
+update wp_users set user_pass=md5("123456") where user_login='admin';修改表中用户的密码
+
+
+删除数据库中用户名为空的值：
+delete from mysql.user where user=‘’；
+
+删除mysql中所有的用户，包括root超级用户
+delete from mysql.user;
+
+增加system并提升为超级管理员，即和root等价：
+grant all privileges on *.* to system@'localhost' identifed by '123456' with grant option;
+
+创建mysql用户及赋予用户权限：
+create user 'mark'@'localhost' identified by 'passwd'
+grant all on db1.* to ‘mark’@'localhost'       ===========》先创建用户，再授权
+
+grant all on db1.* to ‘mark’@'localhost' identified by ‘passwd’  =======》》》运维人员常用，创建用户的同时进行权限授权
+
+grant select on db2.* invoice to 'mark'@'localhost'
+grant usage on *.* to 'mark'@'localhost' WITH MAX_QUERIS_PRE_HOUP 90
+通过grant的命令帮助，可以查到很多创建用户并授权的例子
+
+显示权限：
+show grants for yangdi@localhost;
+
+远程授权的思想及方法：
+grant all on *.* to test@'10.0.0.%' identified by 'passwd';
+
+flush privileges;或者通过子网掩码：10.0.0.0/255.255.255.0
+
+收回权限：
+revoke insert on *.* 'yangdi'@'127.0.0.1';
+
+企业生产环境如何授权用户权限？
+1.博客，CMS等产品的数据库授权：
+对于web链接用户授权尽量采用最小化原则
+1.grant select.insert,update,delete,create,drop on blog.* to 'blog'@'10.0.0.%' identified by 'passwd';
+常规授权select，insert，update，delete 4个权限即可，有的开源软件discuz，bbs，还需要create，drop等比较危险的权限
+2.生成数据库以后，收回create，drop授权
+help revoke；
+revoke create，drop on blog.* from 'blog'@'10.0.0.%';
+
+建表：
+use  oldboy
+
+create table student（
+id int(4) not null,
+name char(20) not null ,
+age tinyint(2) not null default '0',
+dept varchar(16) default null
+）;
+
+查看表结构:
+
+desc student；
+
+
+
+
+添加额外管理员：
+privileges on *.* to toor@‘localhost’ identified by ‘oldboy123’ with grant option
+flush privileges;
+
+查看一个用户的权限：
+show grants for ‘root’@‘localhost’;
+
+
+sql语句分类：
+DDL-数据定义语言（create，alter，drop）
+DML-数据操纵语言（select，insert，delete，update）
+DCL-数据控制语言（grant，revoke，commit，rollback）
+
+创建数据库：
+create database yangdi;数据库名不要以数字开头
+
+删除数据库：
+drop database <数据库名>;
+
+查看数据库：
+show databases like 'yang';
+show databases like '%old%';
+show databases;
+show create database yang\G; 默认字符是latin1
+show create table student\G
+
+指定字符集创建数据库：
+create database yang_utf8 default CHARACTER set utf8 collate utf8_general_ci;
+show create database yang\G;
+
+连接数据库：
+use oldboy;
+use <数据库>;
+
+查看数据库：
+select database();查看当前数据库名
+select user（）;查看当前用户
+select version();查看数据库版本
+select now();查看时间
+
+查看表：show tables;
+show tables from yangdi;
+
+删除mysql系统的多余账号：
+drop user "用户名"@“主机名”;
+用户名大写就不能删除，使用delete：
+delete from mysql.user where user='root' and host = '::1';
+flush privileges;
+
+
+为表的字段创建索引：
+查询数据库，按主键查询是最快的，每个表只能都有一个主键，但可以有多个普通索引列，主键要求所有内容必须唯一，而索引列不要求内容必须唯一
+
+无论建立主键索引还是普通索引，都要在表的对应列上创建，可以对单列创建索引，也可以对多列创建索引
+
+create table student（
+id int(4) not null AUTO_INCREMENT，
+name char(20) not null ,
+age tinyint(2) not null default '0',
+dept varchar(16) default null，
+primary key(id)		主键
+KEY index_name(name)   name字段普通索引
+）;
+
+建表通过alter命令增加主键索引（不这么做）
+1.alter table student drop primary key； 主键列不能重复创建，必须先删除上面的设置
+
+利用alter命令修改id列为自增主键列
+mysql》alter table student change id id int primary key auto_increment；
+
+添加索引：alter table student add index index_name(name);
+	  alter table student add index index_dept(dept);
+
+删除索引：alter table student drop index index_name;
+	  drop  index index_dept on student;
+
+对字段的前n个字段创建普通索引：
+create index index_dept on student(dept(8));前八个字符创建索引
+
+查看索引信息：
+show index from student\G;
+
+创建联合索引：
+create index idx_name_dept on student(name,dept);
+
+删除联合索引：
+drop index ind_name_dept on student;
+
+创建联合索引的字符段：
+create index ind_name_dept on student(name(8),dept(10));
+
+创建唯一索引：
+create unique index uni_ind_name on student(name);
+
+创建主键索引：
+alter table student change id id int primary key auto_increment;
+
+删除主键索引：
+alter table student drop primary key;
+
+创建普通索引：
+alter table student add index_dept(dept(8));
+
+注意点：并不是索引越多越好，写频繁，读少的业务要少建立索引；索引建立在条件列上
+创建索引要和开发商量；数据库查询慢一般就是没有设置索引
+
+基本索引：
+1.要在表的列上创建索引
+2.索引会加快查询速度，但是会影响更新速度
+3.索引不是越多越好，要在频繁查询的where后的条件列上创建索引
+4.小表或唯一值极少的列上不建索引
+5.在大表，以及不同内容多的列上创建索引
+
+
+
+
+
+
+

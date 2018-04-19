@@ -1,0 +1,13 @@
+find /backup/ -type f -name "*$(date +%F).tar.gz"|xargs md5sum  计算一个md5值 文件不改变，该值不会变
+
+find /backup/ -type f -name "*$(date +%F).tar.gz"|xargs md5sum >/backup/flag_$(date +%F)
+
+cat /backup/flag_$(date +%F)
+
+
+备份系统陪配置文件：
+/var/spool/cron/root
+/etc/rc.local
+/server/scripts
+/etc/sysconfig/iptables
+

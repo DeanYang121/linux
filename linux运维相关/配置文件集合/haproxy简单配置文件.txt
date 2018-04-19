@@ -1,0 +1,54 @@
+global
+    log         127.0.0.1 local0
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    maxconn     4000
+    user        nobody
+    group       nobody
+    daemon
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+#    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 3000
+listen stats
+    mode http
+    bind 0.0.0.0:1080
+    stats enable
+    stats hide-version
+    stats uri     /hadmin?stats
+    stats realm   Haproxy\ Statistics
+    stats auth    admin:admin
+    stats admin if TRUE
+frontend http-in
+    bind *:80
+    mode http
+    log global
+    option httpclose
+    option logasap
+    option dontlognull
+    capture request  header Host len 20
+    capture request  header Referer len 60
+    default_backend servers
+frontend healthcheck
+    bind :1099
+    mode http
+    option httpclose
+    option forwardfor
+    default_backend servers
+backend servers
+  balance roundrobin
+    server websrv1 192.168.196.130:80 check maxconn 2000
+    server websrv2 192.168.196.131:80 check maxconn 2000

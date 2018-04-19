@@ -1,0 +1,3 @@
+常见运维错误：
+1.密码文件加锁 chattr +i /etc/passwd
+导致不能添加用户，安装的nfs没有nfsnobody用户，并且rpcbind安装失败

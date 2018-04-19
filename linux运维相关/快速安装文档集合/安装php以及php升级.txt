@@ -1,0 +1,108 @@
+=====================安装php以及升级php======================
+rpm -qa zlib-devel libxml2-devel libjpeg-devel libjpeg-turbo-devel libiconv-devel
+rpm -qa freetype-devel libpng-devel gd-devel libcurl-devel libxslt-devel libxslt-devel
+
+yum install -y zlib-devel libxml2-devel libjpeg-devel libjpeg-turbo-devel libiconv-devel
+yum install -y freetype-devel libpng-devel gd-devel libcurl-devel libxslt-devel libxslt-devel
+
+wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz
+tar zxf libiconv-1.14.tar.gz
+cd libiconv-1.14
+./configure --prefix=/usr/local/libiconv
+make&&make install
+cd ../
+
+下载libmcrypt-2.5.8.tar.gz
+tar xf libmcrypt-2.5.8.tar.gz
+cd libmcrypt-2.5.8
+cd libltdl/
+./configure --enable-ltdl-install
+make && make install
+
+yum -y install libmcrypt-devel
+yum -y install mhash
+yum -y install mcrypt
+yum install openssl-devel openssl -y
+yum install pcre pcre-devel -y
+
+cd php-5.3.27
+touch ext/phar/phar.phar
+
+./configure --prefix=/application/php5.3.27 \
+--with-apxs2=/application/apache/bin/apxs \
+--with-mysql=mysqlnd \       mysql的安装路，如果有安装设置好路径
+--with-xmlrpc \
+--with-openssl \
+--with-freetype-dir \
+--with-zlib \
+--with-gd \
+--with-jpeg-dir \
+--with-png-dir \
+--with-iconv=/usr/local/libiconv \
+--enable-short-tags \
+--enable-sockets \
+--enable-zend-multibyte \
+--enable-soap \
+--enable-mbstring \
+--enable-static \
+--enable-gd-native-ttf \
+--with-curl \
+--with-xsl \
+--enable-ftp \
+--with-libxml-dir \
+
+=======分隔线==下面是5.5的编译参数======
+ ./configure --prefix=/application/php5.6.0 --with-mysql=/application/mysql/ --with-pdo-mysql=mysqlnd --with-iconv-dir=/usr/local/libiconv/ --with-freetype-dir --with-jpeg-dir --with-png-dir --with-zlib --with-libxml-dir=/usr --enable-rpath --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization --enable-mbregex --with-curl --enable-fpm --enable-mbstring --with-mcrypt --with-gd --enable-gd-native-ttf  --with-openssl --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-soap --enable-short-tags --enable-static --with-xsl --with-fpm-user=nginx --with-fpm-group=nginx --enable-ftp --enable-opcache=no 
+
+升级php：删除原来的安装目录，就好像windows下安装绿色软件，删除之后，从新编译安装
+
+==========================================
+ 注意与LNMP环境编译的区别，没有php-fpm，直接就可以运行php解析程序
+make
+make install
+ln -s /application/php5.3.27 /application/php
+cp php.ini-production /application/php/lib/php.ini
+
+启动：/application/php/sbin/php-fpm 
+
+
+
+
+./configure \
+--prefix=/application/php-5.5.38 \
+--with-mysql=/application/mysql/ \
+--with-mysqli=mysqlnd \
+--with-pdo-mysql=mysqlnd \
+--with-iconv-dir=/usr/local/libiconv \
+--with-freetype-dir \
+--with-jpeg-dir \
+--with-png-dir \
+--with-zlib \
+--with-libxml-dir=/usr \
+--with-gettext \
+--enable-xml \
+--disable-rpath \
+--enable-bcmath \
+--enable-shmop \
+--enable-sysvsem \
+--enable-inline-optimization \
+--with-curl \
+--enable-mbregex \
+--enable-fpm \
+--enable-mbstring \
+--with-mcrypt \
+--with-gd \
+--enable-gd-native-ttf \
+--with-openssl \
+--with-mhash \
+--enable-pcntl \
+--enable-sockets \
+--with-xmlrpc \
+--enable-soap \
+--enable-short-tags \
+--enable-static \
+--with-xsl \
+--with-fpm-user=nginx \
+--with-fpm-group=nginx \
+--enable-ftp \
+--enable-opcache=no

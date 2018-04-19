@@ -1,0 +1,402 @@
+pymysql
+ pymsql是Python中操作MySQL的模块，其使用方法和MySQLdb几乎相同。
+
+1、下载安装
+
+pip3 install pymysql
+2、操作数据库
+
+（1）、执行sql
+
+复制代码
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+import pymysql
+  
+# 创建连接
+conn = pymysql.connect(host='127.0.0.1', port=3306, user='root', passwd='123', db='t1')
+# 创建游标
+cursor = conn.cursor()
+  
+# 执行SQL，并返回收影响行数
+effect_row = cursor.execute("update hosts set host = '1.1.1.2'")
+  
+# 执行SQL，并返回受影响行数
+#effect_row = cursor.execute("update hosts set host = '1.1.1.2' where nid > %s", (1,))
+  
+# 执行SQL，并返回受影响行数
+#effect_row = cursor.executemany("insert into hosts(host,color_id)values(%s,%s)", [("1.1.1.11",1),("1.1.1.11",2)])
+  
+  
+# 提交，不然无法保存新建或者修改的数据
+conn.commit()
+  
+# 关闭游标
+cursor.close()
+# 关闭连接
+conn.close()
+复制代码
+（2）、获取新创建数据自增ID
+
+复制代码
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+import pymysql
+  
+conn = pymysql.connect(host='127.0.0.1', port=3306, user='root', passwd='123', db='t1')
+cursor = conn.cursor()
+cursor.executemany("insert into hosts(host,color_id)values(%s,%s)", [("1.1.1.11",1),("1.1.1.11",2)])
+conn.commit()
+cursor.close()
+conn.close()
+  
+# 获取最新自增ID
+new_id = cursor.lastrowid
+复制代码
+（3）、获取查询数据
+
+复制代码
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+import pymysql
+  
+conn = pymysql.connect(host='127.0.0.1', port=3306, user='root', passwd='123', db='t1')
+cursor = conn.cursor()
+cursor.execute("select * from hosts")
+  
+# 获取第一行数据
+row_1 = cursor.fetchone()
+  
+# 获取前n行数据
+# row_2 = cursor.fetchmany(3)
+# 获取所有数据
+# row_3 = cursor.fetchall()
+  
+conn.commit()
+cursor.close()
+conn.close()
+复制代码
+注：在fetch数据时按照顺序进行，可以使用cursor.scroll(num,mode)来移动游标位置，如：
+
+cursor.scroll(1,mode='relative')  # 相对当前位置移动
+cursor.scroll(2,mode='absolute') # 相对绝对位置移动
+（4）、fetch数据类型
+
+　　关于默认获取的数据是元祖类型，如果想要或者字典类型的数据，即：
+
+复制代码
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+import pymysql
+  
+conn = pymysql.connect(host='127.0.0.1', port=3306, user='root', passwd='123', db='t1')
+  
+# 游标设置为字典类型
+cursor = conn.cursor(cursor=pymysql.cursors.DictCursor)
+r = cursor.execute("call p1()")
+  
+result = cursor.fetchone()
+  
+conn.commit()
+cursor.close()
+conn.close()
+复制代码
+ 
+
+sqlalchemy简介
+SQLAlchemy是Python编程语言下的一款开源软件。提供了SQL工具包及对象关系映射（ORM）工具，使用MIT许可证发行。
+
+SQLAlchemy“采用简单的Python语言，为高效和高性能的数据库访问设计，实现了完整的企业级持久模型”。SQLAlchemy的理念是，SQL数据库的量级和性能重要于对象集合；而对象集合的抽象又重要于表和行。因此，SQLAlchmey采用了类似于Java里Hibernate的数据映射模型，而不是其他ORM框架采用的Active Record模型。不过，Elixir和declarative等可选插件可以让用户使用声明语法。
+
+SQLAlchemy与数据库关系图如下：
+
+
+
+sqlalchemy基本操作
+ 一、安装sqlalchemy
+
+本文采用的是mysql案例，所以需要一台有安装mysql数据库的机器
+使用python的pip3安装 pip3 install sqlalchemy
+安装完后查看版本信息
+
+import sqlalchemy
+sqlalchemy.__version__
+二、连接数据库
+
+在sqlalchemy中，session用于创建程序与数据库之间的会话。所有对象的载入和保存都需要通过session对象。
+
+复制代码
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+# 链接数据库采用pymysq模块做映射，后面参数是最大连接数5
+ENGINE=create_engine("mysql+pymysql://root@127.0.0.1:3306/digchouti?charset=utf8", max_overflow=5)
+Session = sessionmaker(bind=engine)
+
+session = Session()
+复制代码
+三、创建映射(创建表)
+
+一个映射对应着一个Python类，用来表示一个表的结构。下面创建一个person表，包括id和name两个字段。也就是说创建表就是用python的的类来实现
+
+复制代码
+import sqlalchemy
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import sessionmaker
+
+ENGINE=create_engine("mysql+pymysql://root@127.0.0.1:3306/digchouti?charset=utf8", max_overflow=5)
+
+#生成一个SQLORM基类，创建表必须继承他，别问我啥意思就是这么规定的
+Base = declarative_base()
+
+class Person(Base):
+    __tablename__ = 'userinfo'
+
+    id   = Column(Integer, primary_key=True)
+    name = Column(String(32))
+
+    def __repr__(self):
+        return "<Person(name='%s')>" % self.name
+复制代码
+此代码是创建了一个名字叫userinfo的表，表里有两列，一列是id，一列是name。
+
+四、添加数据
+
+当然我们创建了表，肯定也要添加数据,代码如下：
+
+#创建一个person对象
+person = Person(name='张岩林')
+#添加person对象，但是仍然没有提交到数据库
+session.add(person)
+#提交数据库
+session.commit()
+当然还能添加多条数据：
+
+session.add_all([
+    Person(name='张岩林'),
+    Person(name='aylin')
+])
+session.commit()
+五、查找数据
+
+在sqlalchemy模块中，查找数据给提供了query()的方法 下面我就把能用到的给列举一下：
+
+复制代码
+#获取所有数据
+session.query(Person).all()
+
+#获取name=‘张岩林’的那行数据
+session.query(Person).filter(Person.name=='张岩林').one()
+
+#获取返回数据的第一行
+session.query(Person).first()
+
+#查找id大于1的所有数据
+session.query(Person.name).filter(Person.id>1).all()
+
+#limit索引取出第一二行数据
+session.query(Person).all()[1:3]
+
+#order by,按照id从大到小排列
+session.query(Person).ordre_by(Person.id)
+
+#equal/like/in
+query = session.query(Person)
+query.filter(Person.id==1).all()
+query.filter(Person.id!=1).all()
+query.filter(Person.name.like('%ay%')).all()
+query.filter(Person.id.in_([1,2,3])).all()
+query.filter(~Person.id.in_([1,2,3])).all()
+query.filter(Person.name==None).all()
+
+#and or
+from sqlalchemy import and_
+from sqlalchemy import or_
+query.filter(and_(Person.id==1, Person.name=='张岩林')).all()
+query.filter(Person.id==1, Person.name=='张岩林').all()
+query.filter(Person.id==1).filter(Person.name=='张岩林').all()
+query.filter(or_(Person.id==1, Person.id==2)).all()
+
+# count计算个数
+session.query(Person).count()
+
+# 修改update
+session.query(Person).filter(id > 2).update({'name' : '张岩林'})
+复制代码
+复制代码
+# 通配符
+ret = session.query(Users).filter(Users.name.like('e%')).all()
+ret = session.query(Users).filter(~Users.name.like('e%')).all()
+
+# 限制
+ret = session.query(Users)[1:2]
+
+# 排序
+ret = session.query(Users).order_by(Users.name.desc()).all()
+ret = session.query(Users).order_by(Users.name.desc(), Users.id.asc()).all()
+
+# 分组
+from sqlalchemy.sql import func
+
+ret = session.query(Users).group_by(Users.extra).all()
+ret = session.query(
+    func.max(Users.id),
+    func.sum(Users.id),
+    func.min(Users.id)).group_by(Users.name).all()
+
+ret = session.query(
+    func.max(Users.id),
+    func.sum(Users.id),
+    func.min(Users.id)).group_by(Users.name).having(func.min(Users.id) >2).all()
+
+# 连表
+
+ret = session.query(Users, Favor).filter(Users.id == Favor.nid).all()
+
+ret = session.query(Person).join(Favor).all()
+
+ret = session.query(Person).join(Favor, isouter=True).all()
+
+
+# 组合
+q1 = session.query(Users.name).filter(Users.id > 2)
+q2 = session.query(Favor.caption).filter(Favor.nid < 2)
+ret = q1.union(q2).all()
+
+q1 = session.query(Users.name).filter(Users.id > 2)
+q2 = session.query(Favor.caption).filter(Favor.nid < 2)
+ret = q1.union_all(q2).all()
+复制代码
+查询这块比较多，可能写的不全还望各位见谅，剩下我相信大家都能扩展起来
+
+上面的介绍完了，可能各位还不能吧融合到一块去，下面我给大家融合写在一块吧：
+
+复制代码
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column
+from sqlalchemy import Integer, String, TIMESTAMP
+from sqlalchemy import ForeignKey, UniqueConstraint, Index
+from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy import create_engine
+
+ENGINE=create_engine("mysql+pymysql://root@127.0.0.1:3306/digchouti?charset=utf8", max_overflow=5)
+
+Base = declarative_base()
+
+class Person(Base):
+    __tablename__ = 'userinfo'
+
+    id   = Column(Integer, primary_key=True)
+    name = Column(String(32))
+
+    def __repr__(self):
+        return "<Person(name='%s')>" % self.name
+
+#创建连接数据库以供提交用，至此表会创建完成，可以去数据库里面查看
+Base.metadata.create_all(ENGINE)
+Session = sessionmaker(bind=engine)
+# 往里面插入多条数据
+session = Session()
+session.add_all([
+    Person(name='张岩林'),
+    Person(name='很帅')
+])
+session.commit()
+复制代码
+sqlalchemy表关系之高级用法
+上面阐述的是对于一张表的操作，下面将说的是表关系的一对多，多对多，了解数据库的都知道外键，也就是表关系建立。
+
+1、一对多外键(1)
+
+第一种方法我们只用到普通的操作，这个方式相对于好理解，在第一张表创建完，插入数据然后要记得提交数据，然后往第二章表创建数据的时候，可以直接拿第一张相关联的数据，代码如下：
+
+复制代码
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import  Column,Integer,ForeignKey,UniqueConstraint,Index,String
+from sqlalchemy.orm import sessionmaker,relationship
+from sqlalchemy import create_engine
+
+
+engine=create_engine('mysql+pymysql://root@127.0.0.1:3306/db1')
+
+Base = declarative_base()
+
+class Son(Base):
+    __tablename__ = 'son'
+    id = Column(Integer,primary_key=True)
+    name = Column(String(32))
+    age = Column(String(32))
+    # 创建外键，对应父亲那张表的id项
+    father_id = Column(Integer,ForeignKey('father.id'))
+
+class Father(Base):
+    __tablename__ = 'father'
+    id = Column(Integer,primary_key=True)
+    name = Column(String(32))
+    age = Column(String(32))
+
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()
+
+f1 = Father(name = 'zhangyanlin',age = '18')
+session.add(f1)
+session.commit()
+
+w1 = Son(name = 'xiaozhang1',age = 3,father_id = 1)
+w2 = Son(name = 'xiaozhang2',age = 3,father_id = 1)
+
+session.add_all([w1,w2])
+session.commit()
+复制代码
+2、一对多外键(2)relationship
+
+ 第二种方法和第一种一样，只是这里改用了relationship来做外键关系，代码如下：
+
+复制代码
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import  Column,Integer,ForeignKey,UniqueConstraint,Index,String
+from sqlalchemy.orm import sessionmaker,relationship
+from sqlalchemy import create_engine
+
+
+engine = create_engine('mysql+pymysql://root@127.0.0.1:3306/db1')
+
+Base = declarative_base()
+
+class Son(Base):
+    __tablename__ = 'son'
+    id = Column(Integer,primary_key=True)
+    name = Column(String(32))
+    age = Column(String(32))
+
+    father_id = Column(Integer,ForeignKey('father.id'))
+
+class Father(Base):
+    __tablename__ = 'father'
+    id = Column(Integer,primary_key=True)
+    name = Column(String(32))
+    age = Column(String(32))
+    son = relationship('Son')
+
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()
+
+f1 = Father(name = 'zhangyanlin',age = '18')
+
+w1 = Son(name = 'xiaozhang1',age = '3')
+w2 = Son(name = 'xiaozhang2',age = '4')
+# 重点是这里绑定关系
+f1.son = [w1,w2]
+# 只需要把父亲给传进去，儿子的自然就上传进去啦
+session.add(f1)
+session.commit()

@@ -1,0 +1,52 @@
+NFS
+
+硬件准备：
+lb01：192.168.110.134 主负载均衡器
+lb02：192.128.110.135 辅负载均衡器
+
+web01:192.169.110.130
+web02:192.168.110.131
+
+软件：nginx1.6.3
+
+安装 依赖包：
+yum install openssl openssl-devel pcre pcre-devel -y
+rpm -qa openssl openssl-devel pcre pcre-devel
+
+安装nginx命令合集：
+mkdir -p /home/dean/tools
+cd /home/dean/tools
+wget -q http://nginx.org/download/nginx-1.6.3.tar.gz
+
+ls -l nginx-1.6.3.tar.gz
+useradd nginx -s /sbin/nologin -M
+tar xf nginx-1.6.3.tar.gz
+cd nginx-1.6.3
+./configure --user=nginx --group=nginx --prefix=/application/nginx-1.6.3 --with-http_stub_status_module --with-http_ssl_module
+make 
+make install
+ln -s /application/nginx-1.6.3 /application/nginx
+
+配置nginx.conf:
+worker_processes  1;
+events {
+    worker_connections  1024;
+}
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile        on;
+    keepalive_timeout  65;
+    upstream www_server_pools{
+                server 192.168.110.130:80 weight=1;
+                server 192.168.110.131:80 weight=1;
+        }
+    server {
+        listen       80;
+        server_name  www.happy.comi bbs.happy.com happy.com;
+        location / {
+        proxy_pass http://www_server_pools;
+        proxy_set_header  Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }
+}

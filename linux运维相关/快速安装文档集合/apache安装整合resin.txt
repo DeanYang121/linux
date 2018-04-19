@@ -1,0 +1,40 @@
+======安装apache=====
+
+cd httpd-2.2.31
+yum install -y zlib libxml libjpeg freetype libpng gd curl libiconv zlib-devel libxml 
+ ./configure --prefix=/application/apache2.2.31 --enable-deflate --enable-headers --enable-modules=so --enable-so --with-mpm=worker --enable-rewrite
+
+
+
+make
+make install
+ln -s /application/apache /application/apache2.2.31
+
+
+======apache===============
+
+======apache整合resin======
+vim /application/apache/conf/extra/httpd-vhost.conf
+
+NamevirtualHost *:80
+<VirtualHost *:80>
+	ServerAdmin 958672189@qq.com
+	DocumentRoot "/var/www"
+	DirectoryIndex index.html index.jsp
+	ServerName www.test.com
+	ErrorLog "logs/test-error.log"
+	CustomLog "logs/test-access.log"
+	
+	<Directory "/var/www">
+	Options -Indexes +FollowSymlinks
+	AllowOverrride None
+	Order allow,deny
+	Allow from all
+	</Directory>
+#Resin Configuration
+ResinConfigServer 10.0.0.8 6911
+SetHandler caucho-request
+</VirtualHost>
+
+默认不配置sethanler时，动静资源分离，访问静态文件会直接访问apache的站点目录，访问jsp，php会访问resin的目录。
+添加上述配置以后，apache接受到的请求会全部转发到resin服务。

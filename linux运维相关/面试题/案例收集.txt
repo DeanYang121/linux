@@ -1,0 +1,13 @@
+/var/log/messages 出现kernel：nf_conntrack:table full,dropping packet. 什么问题如何解决
+
+网站迁移故障分析：
+http://lxshopping.blog.51cto.com/4542643/1574929
+
+mysql slepp线程过多的问题案例
+
+linux  java/http/php进程高：
+top -p 32311
+strace -p 32311
+http://www.tuicool.com/articles/VFVbia
+http://blog.sina.com.cn/s/blog/48eef8410101f14p.html
+

@@ -1,0 +1,18 @@
+sudo apt-get install zlib1g-dev
+sudo apt-get install gcc
+cd Python-3.6.0
+./configure --with-ssl --prefix=/usr/local/python36
+make
+mkdir /code
+cd /code/
+/usr/local/python35/bin/pyvenv py3venv    //隔离环境
+
+source ./py3venv/bin/activate ##进入python3环境
+deactivate  #退出环境
+
+python -V
+apt install curl
+
+pip -V
+
+

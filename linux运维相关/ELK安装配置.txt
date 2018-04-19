@@ -1,0 +1,20 @@
+报错：
+http://www.jianshu.com/p/89f8099a6d09
+http://www.cnblogs.com/sloveling/p/elasticsearch.html
+http://www.bkjia.com/Javascript/1211655.html
+
+elk天生支持集群
+测试是否成功：
+curl http://192.168.196.147:9200
+
+elk5.0插件安装：
+官网找装插件配置文档：
+Marvel-agent 监控
+head 插件 集群管理插件
+big/desk 插件
+kopf 插件
+用githup上地址可以直接安装？
+
+ip/plugin/head 浏览器打开
+使用head插件 操作  写数据 查询等等 
+

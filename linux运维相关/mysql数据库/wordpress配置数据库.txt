@@ -1,0 +1,51 @@
+修改php链接文件：
+vim wp_config
+define  DB_HOST  10.0.0.5
+/etc/hosts中做解析 10.0.0.5 db.happy.com
+
+数据库远程连接：
+mysql  -ubbs  -p123456  -h 10.0.0.5
+
+
+数据库中授权命令：
+grant  select，insert，update，delete  on wordpress.*  to   wordpress@'10.0.0.%' identified by  '123456';
+
+flush privileges；
+grant  all  on bbs.*  to   bbs@'10.0.0.%'  identified by  '123456';
+
+drop user bbs@'10.0.0.5';all权限太大
+select  user，host  from mysql.user
+
+grant  select，insert，update，delete ,drop on bbs.*  to   bbs@'10.0.0.%' identified by  '123456';
+
+flush privileges;
+
+show grants for bbs    ：mysql查看用户权限
+
+zip解压：
+unzip解压： unzip   Discuz_X3.2_SC.zip    -o: 解决提示，会把同名文件覆盖，先备份再使用，否则损失大
+gzip压缩：
+chown -R nginx.nginx bbs/    安装完以后再调整权限，文件644目录755
+
+bbs目录下：
+chown -R nginx.nginx    config/     data/    uc_*
+
+查找图片头像bbs：
+find  ./  f  -name  "*.jpg"  -mmin  -3   查看3分钟之前的图片
+
+apache与php的整合以及远程mysql的链接：
+##################################################
+1.修改apache的配置文件httpd—conf，将uUser改为www
+2.在AddType application添加如下：
+ AddType application/x-httpd-php .php .phtml
+ AddType application/x-httpd-php-source .phps
+解析文件
+3.166gg  添加：index.php
+
+查看nginx编译参数：/usr/local/nginx/sbin/nginx -V
+查看apache编译参数：cat /usr/local/apache2/build/config.nice
+查看mysql编译参数：cat /usr/local/mysql/bin/mysqlbug | grep CONFIGURE_LINE
+查看php编译参数：/usr/local/php/bin/php -i | grep configure
+
+
+

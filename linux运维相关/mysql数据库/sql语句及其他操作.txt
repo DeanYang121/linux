@@ -1,0 +1,103 @@
+查看mysql参考手册,学习
+5,6,7,8,10,11,13,14,15
+
+查看表结构：desc test
+
+插入：
+insert into test(id,name) values(1,'dean')
+insert into test(name) values('oldboy') 由于id是自增的，所以只在name列插入值
+insert into test value(3,'inca') 如果不指定值，就要按规则每列都插入恰当的值。程序代码中，使用null类型，不加单引号
+插入的优化：：
+批量插入： insert into user(username,password,age) values('Tom',md5('123456'),'23'),('cat',md5('123456'),'32'),('qing',md5('123456'),'16');
+
+
+备份数据库：
+mysql -uroot -pyy631562 -B oldboy_utf8 >/opt/oldboy_utf.sql
+查看备份的sql的语句：
+grep -E -v "#|\/|^$|--" /opt/oldboy_utf.sql
+
+查询语句：
+use oldboy
+select * from test;
+select  id,name from test limit 0 ,2;
+select  id,name from test  where id =1;
+select  id,name from test  where name='yangdi'; 字符串查询条件要带引号，优化之一
+select  id,name from test  where name='yangdi'  or id =8;
+select id,name from test where id>2 and id <4;
+select id,name from test where id>2 or  id <4;
+
+排序功能：
+select id,name from test order by id desc;(asc )
+
+多表查询：前提条件：外键或者冗余的列
+select student.Sno,student.Sname,course.Cname,SC.Grade  from student,course,SC whree student.Sno=SC.Sno and course.Cno=SC.Cno order by Sno;
+
+使用explain查询select的执行情况：判断一个语句有没有走索引
+explain select * from test where name="oldboy"\G; \G方便观察
+
+help explain；
+
+修改数据：
+1.update 表名 set 字段=新值，… where 条件（一定要注意条件）（不带条件产生严重的事故）
+
+举例：先查看数据：
+select * from test；
+update test set name='yangdi’where  id=3;
+
+
+删除表中数据：
+delete from 表名 where 表达式；
+delete from student where id=1;
+不加条件删除也很危险：delete from test，很危险没加where条件
+命令：truncate table student； 直接清空数据加表名
+
+truncate table student 和 delete from test区别 
+1.前者更快。类似与物理删除，清空物理文件
+2.delete from student 逻辑清楚，按行删
+
+drop命令用于删除数据库。
+
+drop命令格式：drop database <数据库名>;
+
+
+增删改表的字段：
+alter table 表名 add 字段 类型 其他；
+在test表中添加sex，age，qq，字段，类型分布为char（4） int（4） vchar（15）
+alter table test add age int（4） after name；插在name的后面
+alter table test add qq vchar（15） first； 插在第一个
+
+生产中多个复杂添加修改多字段信息案例：
+增加一个字段：
+alter table `etiantian` add `firstphoto` vchar(255) default null comment '第一张图片'
+增加两个字段：
+alter table `basic` add `adhtml_top` vchar(1024) default null comment `顶部广告html`,
+	add `adhtml_right` varchar(1024) default null comment '右侧广告html'
+
+改变字段类型：
+alter table ettiantian modify age char(4) after name; 
+
+改变字段名称:
+
+alter table test change age oldboyage char(4) after name;
+
+更改表名：
+方法1.rename table 源表名 to 新表名；
+方法2.alter table oldboy rename to test
+
+help rename；
+
+删除表：
+drop table test；
+
+常用mysql的操作：
+
+show variables；\G 查看mysql 的变量
+show global status；\G 查看mysql的状态
+
+不重启修改变量：
+grep key_buffer /etc/my.cnf
+set  global key_buffer_size=
+
+查看是否生效：show variables like 'key_buffer%';
+my.cnf 加key_buffer_size=
+

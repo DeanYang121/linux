@@ -1,0 +1,91 @@
+时间同步：
+确保你所有的服务器时间都是正确的，为了确保时间 ok，请在 crontab 里面加上定时时
+间同步。
+*/5 * * * * /usr/sbin/ntpdate time.nist.gov >/dev/null 2>&1
+
+yum install pcre* -y
+
+yum install openssl* -y
+
+./configure --prefix=/application/nginx-1.6.3 --with-http_ssl_module --with-http_spdy_module --with-http_stub_status_module --with-pcre
+
+make && make install
+
+=====nginx==================
+
+yum install gcc make gd-devel libjpeg-devel libpng-devel libxml2-devel bzip2-devel libcurl-devel -y
+
+cd /home/dean/tools
+tar -xf php
+cd php
+
+编译参数：
+./configure --prefix=/application/php-5.5.38 \
+--with-config-file-path=/application/php-5.5.38/etc --with-bz2 --with-curl \
+--enable-ftp --enable-sockets --disable-ipv6 --with-gd \
+--with-jpeg-dir=/usr/local --with-png-dir=/usr/local \
+--with-freetype-dir=/usr/local --enable-gd-native-ttf \
+--with-iconv-dir=/usr/local --enable-mbstring --enable-calendar \
+--with-gettext --with-libxml-dir=/usr/local --with-zlib \
+--with-pdo-mysql=mysqlnd --with-mysqli=mysqlnd --with-mysql=mysqlnd \
+--enable-dom --enable-xml --enable-fpm --with-libdir=lib64 --enable-bcmath
+
+make && make install
+
+cp php.ini-production /application/php-5.5.38/etc/php.ini
+cp /application/php-5.5.38/etc/php-fpm.conf.default /application/php-5.5.38/etc/php-fpm.conf
+
+========php=================
+
+安装mysql。二进制安装也可以。
+
+=======mysql================
+
+编译安装zabbix error: MySQL library not found：
+
+我把--with-mysql改成
+--with-mysql=/usr/local/mysql/bin/mysql_config
+正常通过。
+
+安装zabbix过程中
+configure: error: Invalid Net-SNMP directory - unable to find net-snmp-config
+通过
+yum install net-snmp-devel -y
+解决
+
+[root@localhost lib]# /etc/init.d/zabbix_server start
+Starting zabbix_server: /usr/local/zabbix/sbin/zabbix_server: error while loading shared libraries: libmysqlclient.so.18: cannot open shared object file: No such file or directory
+[FAILED]
+
+解决方法
+
+[root@localhost ~]# locate libmysqlclient.so.18
+/usr/local/mysql/lib/libmysqlclient.so.18
+/usr/local/mysql/lib/libmysqlclient.so.18.0.0
+/usr/src/mysql-5.6.10/libmysql/libmysqlclient.so.18
+/usr/src/mysql-5.6.10/libmysql/libmysqlclient.so.18.0.0
+
+[root@localhost ~]# echo "/usr/local/mysql/lib" >> /etc/ld.so.conf
+
+[root@localhost ~]# ldconfig
+
+启动zabbix_server失败：
+listener failed: cannot resolve address [[localhost]:10051]: [-2] Name or service not know
+编辑zabbix.conf将localhost改为127.0.0.1
+
+http://www.tuicool.com/articles/JRVVniM
+http://www.tuicool.com/articles/JRVVniM
+中文支持
+http://www.ttlsa.com/zabbix/zabbix-convert-into-chinese-8-ttlsa/
+
+乱码解决：
+百度
+
+
+一、在页头使用date_default_timezone_set()设置 date_default_timezone_set('PRC');//东八时区 echo date('Y-m-d  H:i:s');
+ 
+
+二、在页头使用 ini_set('date.timezone','Asia/Shanghai');
+ 
+
+三、修改php.ini。打开php5.ini查找date.timezone 去掉前面的分号修改成为：date.timezone =PRC

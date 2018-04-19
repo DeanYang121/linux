@@ -1,0 +1,50 @@
+======================nginx负载均衡添加节点检查=====================================================
+
+wget https://codeload.github.com/yaoweibin/nginx_upstream_check_module/zip/master
+unzip master
+cd nginx-1.6.3
+patch -p1 < ../nginx_upstream_check_module-master/check_1.5.12+.patch 
+
+/application/nginx/sbin/nginx -V 
+
+./configure --user=nginx --group=nginx --prefix=/application/nginx-1.6.3 --with-http_stub_status_module --with-http_ssl_module --add-module=../nginx_upstream_check_module-master/
+make
+cp ./objs/nginx /application/nginx/sbin/nginx
+
+=======================nginx.conf节点检查配置==============================
+worker_processes  1;
+events {
+    worker_connections  1024;
+}
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile        on;
+    keepalive_timeout  65;
+    upstream www_server_pools{
+                server 192.168.110.130:80 weight=1;
+                server 192.168.110.131:80 weight=1;
+                check interval=3000 rise=2 fall=5 timeout=1000 type=http;
+        }
+    server {
+        listen       80;
+        server_name  www.happy.comi bbs.happy.com happy.com;
+        location / {
+        proxy_pass http://www_server_pools;
+        proxy_set_header  Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }
+        location /status {
+                check_status;
+                access_log off;
+        }
+    }
+}
+===========================配置end=====================================
+/application/nginx/sbin/nginx -t
+/application/nginx/sbin/nginx -s stop
+/application/nginx/sbin/nginx 
+
+打开浏览器：http://192.168.110.134/status/
+
+可以自己写脚本监控

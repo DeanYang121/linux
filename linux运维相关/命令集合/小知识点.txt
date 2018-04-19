@@ -1,0 +1,2 @@
+cp -aH /etc/rc.local /opt/       »Ì¡¨Ω”de øΩ±¥
+find /back -type f -regex '.*\.gz\|.*\.log' -mtime +3|xargs rm -f

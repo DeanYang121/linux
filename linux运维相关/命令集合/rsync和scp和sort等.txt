@@ -1,0 +1,115 @@
+scp：
+scp是ssh下常见的复制命令，可以远程复制文件
+scp [-pnr] [user]@[ip]:[远程文件目录]
+
+p：指定连接到远程主机的端口号；
+n：将输入重新定位到/dev/null
+r:递归，复制目录
+====== 
+从 本地 复制到 远程 
+====== 
+复制文件： 
+scp local_file remote_username@remote_ip:remote_folder 
+scp -P52113 testfile root@10.0.0.1:/tools/
+复制目录： 
+scp -r local_folder remote_username@remote_ip:remote_folder 
+scp -r /home/space/music/ root@10.0.0.1:/home/root/others/ 
+
+====== 
+从 远程 复制到 本地 
+====== 
+从 远程 复制到 本地，只要将 从 本地 复制到 远程 的命令 的 后2个参数 调换顺序 即可； 
+scp root@172.19.2.75:/home/root/full.tar.gz /home/
+scp root@10.0.0.1:/home/root/others/music /home/space/music/1.mp3 
+scp -r root@10.0.0.1:/home/root/others/ /home/space/music/
+
+cp：
+cp [options] source dest
+cp [options] source... directory
+
+说明：将一个档案拷贝至另一档案，或将数个档案拷贝至另一目录
+-a 尽可能将档案状态、权限等资料都照原状予以复制。
+-r 若 source 中含有目录名，则将目录下之档案亦皆依序拷贝至目的地。
+-f 若目的地已经有相同档名的档案存在，则在复制前先予以删除再行复制。
+
+rsync:
+rsync [OPTION]... SRC DEST 
+rsync [OPTION]... SRC [USER@]host:DEST 
+rsync [OPTION]... [USER@]HOST:SRC DEST 
+rsync [OPTION]... [USER@]HOST::SRC DEST 
+rsync [OPTION]... SRC [USER@]HOST::DEST 
+rsync [OPTION]... rsync://[USER@]HOST[:PORT]/SRC [DEST]
+1.拷贝本地文件。当SRC和DES路径信息都不包含有单个冒号":"分隔符时就启动这种工作模式。如：rsync -a /data /backup
+2.使用一个远程shell程序(如rsh、ssh)来实现将本地机器的内容拷贝到远程机器。当DST路径地址包含单个冒号":"分隔符时启动该模式。如：rsync -avz *.c foo:src
+3.使用一个远程shell程序(如rsh、ssh)来实现将远程机器的内容拷贝到本地机器。当SRC地址路径包含单个冒号":"分隔符时启动该模式。如：rsync -avz foo:src/bar /data
+4.从远程rsync服务器中拷贝文件到本地机。当SRC路径信息包含"::"分隔符时启动该模式。如：rsync -av root@192.168.78.192::www /databack
+5.从本地机器拷贝文件到远程rsync服务器中。当DST路径信息包含"::"分隔符时启动该模式。如：rsync -av /databack root@192.168.78.192::www
+6.列远程机的文件列表。这类似于rsync传输，不过只要在命令中省略掉本地机信息即可。如：rsync -v rsync://192.168.78.192/www
+
+选项：
+-v, --verbose 详细模式输出。
+-q, --quiet 精简输出模式
+-a, --archive 归档模式，表示以递归方式传输文件，并保持所有文件属性，等于-rlptgoD。
+-z, --compress 对备份的文件在传输时进行压缩处理。
+-r, --recursive 对子目录以递归模式处理。
+-e, --rsh=command 指定使用rsh、ssh方式进行数据同步。
+--delete 删除那些DST中SRC没有的文件。
+--exclude=PATTERN 指定排除不需要传输的文件模式。
+--exclude-from=FILE 排除FILE中指定模式的文件。
+
+
+sort：
+sort [-fbMnrtuk] [file or stdin]
+选项与参数：
+-f  ：忽略大小写的差异，例如 A 与 a 视为编码相同；
+-b  ：忽略最前面的空格符部分；
+-M  ：以月份的名字来排序，例如 JAN, DEC 等等的排序方法；
+-n  ：使用『纯数字』进行排序(默认是以文字型态来排序的)；
+-r  ：反向排序；
+-u  ：就是 uniq ，相同的数据中，仅出现一行代表；
+-t  ：分隔符，默认是用 [tab] 键来分隔；
+-k  ：以那个区间 (field) 来进行排序的意思
+
+uniq：与sort结合使用
+uniq [-icu]
+选项与参数：
+-i   ：忽略大小写字符的不同；
+-c  ：进行计数
+-u  ：只显示唯一的行
+
+cut：
+cut -d'分隔字符' -f fields <==用于有特定分隔字符
+cut -c 字符区间            <==用于排列整齐的信息
+选项与参数：
+-d  ：后面接分隔字符。与 -f 一起使用；
+-f  ：依据 -d 的分隔字符将一段信息分割成为数段，用 -f 取出第几段的意思；
+-c  ：以字符 (characters) 的单位取出固定字符区间
+
+wc:
+wc [-lwm]
+选项与参数：
+-l  ：仅列出行；
+-w  ：仅列出多少字(英文单字)；
+-m  ：多少字符；
+
+gzip：
+gzip(选项)(参数)
+
+-a或——ascii：使用ASCII文字模式； 
+-d或--decompress或----uncompress：解开压缩文件；
+-f或——force：强行压缩文件。不理会文件名称或硬连接是否存在以及该文件是否为符号连接； 
+-h或——help：在线帮助； 
+-l或——list：列出压缩文件的相关信息； 
+-L或——license：显示版本与版权信息； 
+-n或--no-name：压缩文件时，不保存原来的文件名称及时间戳记； 
+-N或——name：压缩文件时，保存原来的文件名称及时间戳记； 
+-q或——quiet：不显示警告信息； 
+-r或——recursive：递归处理，将指定目录下的所有文件及子目录一并处理； 
+-S或<压缩字尾字符串>或----suffix<压缩字尾字符串>：更改压缩字尾字符串； 
+-t或——test：测试压缩文件是否正确无误； 
+-v或——verbose：显示指令执行过程； 
+-V或——version：显示版本信息； -<压缩效率>：压缩效率是一个介于1~9的数值，预设值为“6”，指定愈大的数值，压缩效率就会愈高； 
+--best：此参数的效果和指定“-9”参数相同； 
+--fast：此参数的效果和指定“-1”参数相同。
+
+

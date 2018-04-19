@@ -1,0 +1,44 @@
+linux DNS 学习笔记
+
+安装需要的软件
+
+1.图形界面配置
+  bind 9.3 
+  bind-choor 
+  bind-utils
+  system-config-bind 图形界面安装包
+  安装 caching-nameserver //没有互联网的情况下 
+
+TOAD OR PLSQL 连接 ORACLE ，Toad报“No valid Oracle Client found”错
+
+本机连接需要再本地安装oralce客户端，如果不想安装Oracle那庞大的client，还有一种简便的方式就是下载instantclient。
+
+1.下载toad客户端或者plsql客户端。
+问同事要了一个plsql，我自己也下载了一个带有注册码的toad，toad下载地址： 
+http://download.csdn.net/download/xjl456852/6515029
+
+2.使用toad连接，启动报错，如下：
+Toad报“No valid Oracle Client found”错
+
+3.下载Ora10InstantClient，并做相应配置，但要注意第三方工具如：PL/SQL Developer和Toad的版本，要下载32位client。
+下载地址：http://download.csdn.net/detail/rolaya/4821908
+          http://www.oracle.com/technetwork/database/features/instant-client/index-097480.html
+下载后解压，并把Ora10InstantClient安装目录配置到环境变量中，重启Toad，问题解决。
+
+4.最重要的一步，让toad或者plsql能识别到客户端。
+在解压目录下新建tnsnames.ora文件，并添加如下内容：
+ebs =                                                                         //连接用的字符串。
+(DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 172.31.14.240)(PORT = 1521))          //主机名称，端口号
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = deep)                                                  //数据库名称
+    )
+)
+
+5.重启toad，不再报错了，做相应配置，在Session->New Connection 中配置链接oracle的账号密码等信息。
+  重启plsql，输入账号密码，Database输入内容格式：ip地址/数据库名
+  ok，可以访问了，感觉toad开发相对易用。
+  
+参考文章：  http://mabinjava.blog.163.com/blog/static/18308346020125965811267/
+			http://blog.csdn.net/qq122261257/article/details/8171822

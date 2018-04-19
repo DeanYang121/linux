@@ -1,0 +1,71 @@
+安装CentOS7并且优化：
+==========================================
+配置cpu支持虚拟化
+选择语言支持英语和中文
+选择软件选择minimal安装，并且选择Debug tools / Development tools   /   Base  /Compatibllity libraries  这三个
+部署orcal需要安装桌面
+配置磁盘：
+/boot   200M   如果是比较小的磁盘空间建议ext4，磁盘空间为2TB或以上建议xfs，系统支持超长的文件名vfat
+	   选择standard partion  ext4  注意点击更新按钮右下角
+/swap  设备类型选择LVM，可以修改卷组名称，
+
+内存1-2G,swap是物理内存的1.5倍
+内存2-8G,与物理内存相等
+大于8G，物理内存的0.75倍
+ 
+/	剩下的全部空间给根分区，选择ext4，磁盘类型为LVM，卷组为上次默认的
+
+配置network：、
+打开network开关
+暂时不修改主机名，后面修改，网卡名也暂时不修改
+选择ipv4，可以配置静态ip还是dhcp
+保存
+
+配置root密码====》安装完成以后reboot登录
+===========================================
+优化：关闭firewalld，selinux。
+配置yum源
+
+安装软件包：
+yum install tree telnet dos2unix sysstat lrzsz nc namp vim -y
+
+yum  groupinstall  "Development Tools" -y
+
+===================================
+关闭iptables：
+systemctl stop firewalld.service
+
+查看状态：
+systemctl status firewalld.service
+
+关闭开机自启动：
+systemctl disable firewalld.service
+
+selinux状态查看：
+sestatus
+
+修改/etc/selinux/config:
+将SELINUX=disabled
+
+CentOS7修改服务器主机名方法：
+01.hostname 主机名称 这种方式，只能修改临时的主机名，当重启机器后，主机名称又变回来了。
+
+01.hostnamectl set-hostname <主机名> 使用这种方式修改，可以永久性的修改主机名称！
+===============================
+
+==============================================
+查看开机自启动软件：关闭不必要的
+一些CentOS的命令：
+
+添加开机自启动：
+systemctl enable jenkins.service #设置jenkins服务为自启动服务
+sysstemctl start  jenkins.service #启动jenkins服务
+systemctl disable xx.service
+查看开机是否自启动：
+systemctl is-enabled glusterd.service
+
+查看开机自启动的程序，相当于chkconfig --list：
+ls /etc/systemd/system/multi-user.target.wants/
+
+
+需要继续总结优化：

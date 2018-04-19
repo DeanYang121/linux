@@ -1,0 +1,30 @@
+Linux中的原始的配置文件中大多有较多注释和空行，尤其是那些没有配置文件man(man 5)的软件包，这些注释对我们理解配置项很有帮助，但很多的时候过多说明会造成视觉上的混乱，因此，在已经理解配置选项用途的情况下非常有必要将注释和空行清除，运用sed可方便快捷的完成这个任务，当然在操作前还是建议将原配置文件备份一份．
+Linux配置项注释多为'#'开头的行，当然也有以';'开头的，视情况而定
+sed去除注释行：sed -i -c -e '/^#/d' config_file 
+sed去除空行： sed -i -c -e '/^$/d' config_file 
+sed去空行和注释行：sed -i -c -e '/^$/d;/^#/' config_file
+
+egrep -v "#|^$" httpd.conf >httpd.conf.default
+
+http://www.haproxy.org/download/1.6/src/
+下载地址。
+sed s/^" "*//g |sed /^$/d |sed /^#/d
+
+tar xvf haproxy-1.6.3.tar.gz 
+cd haproxy-1.6.3
+make TARGET=linux2628（大于2.6.18内核就是2628，uname -r 查看） PREFIX=/application/haproxy
+make install PREFIX=/application/haproxy
+
+mkdir /application/haproxy/conf
+cd /application/haproxy/conf
+vim haproxy.cfg
+加入配置文件
+
+启动：/application/sbin/haproxy -D -f 指定配置文件路径
+
+killall -9 haproxy 关闭haproxy
+平滑重启：/application/sbin/haproxy -f /application/haproxy/conf/haproxy.cfg -st `cat /application/haproxy/logs/haproxy.pid`
+
+脚本管理启动和关闭。
+
+访问后台管理：配置文件中的那个uri 找到指定端口 和 链接  访问。

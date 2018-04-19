@@ -1,0 +1,20 @@
+==================安装Memcached=============================
+yum install libevent libevent-devel nc -y
+rpm -qa libevent libevent-devel nc    
+yum install memcached -y
+which  memcached
+memcached -m 16m -p 11211 -d -u root -c 8192  启动一个实例
+memcached -m 16m -p 11212 -d -u root -c 8192  启动多个实例
+将上面两个命令加入/etc/rc.local
+tail -2 /etc/rc.local
+
+{
+   编译安装memcached：
+	wget http://memcached.org/files/memcached-1.4.24.tar.gz
+	tar xf memcached-1.4.24.tar.gz
+	cd memcached-1.4.24.tar.gz
+	./configure
+	make
+	make install
+	cd ../
+}

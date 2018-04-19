@@ -1,0 +1,71 @@
+
+
+=================================
+>>> import os #导入os模块
+>>> help(os)   #查看os模块帮助文档，里面详细的模块相关函数和使用方法
+
+
+os.sep 更改操作系统中的路径分隔符。
+os.getcwd()获取当前路径，这个在Python代码中比较常用。
+os.listdir() 列出当前目录下的所有文件和文件夹。
+os.mkdir('haha') 创建一个名为haha的目录
+os.rmdir（‘c’）删除一个名为c的目录
+os.remove() 方法可以删除指定的文件。
+os.system() 方法用来运行shell命令。
+os.chdir() 改变当前目录，到指定目录中。
+os.rename('abc.txt'，'reabc.txt')重命名一个文件
+
+Python必知模块库
+os 模块
+sys 模块
+re 正则表达式
+time 日期时间
+pickle 持久化
+random 随机
+csv 模块
+logging 日志
+socket网络通信
+json模块
+urlparse 解析URL
+urllib 模块
+urllib2 模块
+robotparser 解析
+Cookie 模块
+smtplib 邮件
+Base64 编码
+xmlrpclib客户端
+string 文本
+Queue 线程安全
+math数学计算
+linecache缓存
+threading多线程
+sqlite3数据库
+gzip压缩解压
+Python sys模块 argv path常用方法图文详解
+
+SYS模块是Python标准库中自带了一个模块。
+sys模块包括了一组非常实用的服务，内含很多函数方法和变量，用来处理Python运行时配置以及资源，从而可以与前当程序之外的系统环境交互，如：Python解释器。
+python sys模块方法
+PYTHON SYS模块目录
+导入sys模块操作
+sys模块重要函数变量
+sys常用方法使用说明
+sys模块案例代码演示
+sys模块教程总结
+
+
+
+
+                                                                                                                                             
+
+
+
+
+
+
+
+
+
+
+
+

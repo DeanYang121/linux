@@ -1,0 +1,10 @@
+
+
+cd /etc/yum.repos.d/
+wget http://mirrors.aliyun.com/repo/Centos-6.repo
+mv CentOS-Base.repo CentOS-Base.repo.bak 
+mv Centos-6.repo CentOS-Base.repo
+
+yum install tree telnet dos2unix sysstat lrzsz nc namp -y
+
+yum groupinstall "Development Tools" -y

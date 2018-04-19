@@ -1,0 +1,42 @@
+安装依赖：sudo apt-get install libaio1
+首先    ： sudo apt-get update
+第一步： sudo apt-get install cmake -y 搭建跨平台安装（编译工具）
+第二步： apt-get install git -y
+第三步：sudo apt-get install gcc g++ -y (一般来说我们使用的UBUNTU自带的) 
+第四步：安装LINUX常用图形库
+apt-get install libncurses5 libncurses5-dev -y
+=========下载mysql-5.7.18.tar.gz二进制安装包  linux genic 版本 包含boost的那个包===========
+解压移动到/application/mysql目录
+
+更改权限：chown -R mysql:mysql  /application/mysql 
+安装libaiol依赖
+创建一个data目录
+初始化命令改变：
+bin/mysqld --initialize  --basedir=/application/mysql --datadir=/application/mysql/data/ --user=mysql
+
+bin/mysql_ssl_rsa_setup --datadir=/application/mysql/data
+
+
+
+ root@localhost: l2j;je?s/N%o
+
+
+初始化完毕之后会生成密码：                
+会告诉你一个临时密码 (root)
+比如：mApr&sfU-6%z
+
+启动命令改变：
+mysqld_safe &
+
+update mysql.user set authentication_string=password("1234567") where user='root' and host='localhost';
+全局环境变量的配置文件位置在：/etc/envirment，将mysql  bin 目录加入到配置文件中去
+
+alter user 'root'@'localhost' identified by '1234567';
+或者
+set password for 'root'@'localhost'=password('123');
+启动之后进入修改密码：
+update set password=md5（"123456"）;
+
+
+在/application/mysql创建配置文件：
+http://blog.csdn.net/tanweii163/article/details/50429802

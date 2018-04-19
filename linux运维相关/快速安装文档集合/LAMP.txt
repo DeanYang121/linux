@@ -1,0 +1,42 @@
+apache配合php的安装编译参数：
+./configure --prefix=/application/php5.5.26 \
+--with-apxs2=/application/apache/bin/apxs \
+--with-mysql=mysqlnd \
+--with-xmlrpc \
+--with-openssl \
+--with-freetype-dir \
+--with-zlib \
+--with-gd \
+--with-jpeg-dir \
+--with-png-dir \
+--with-iconv=/usr/local/libiconv \
+--enable-short-tags \
+--enable-sockets \
+--enable-zend-multibyte \
+--enable-soap \
+--enable-mbstring \
+--enable-static \
+--enable-gd-native-ttf \
+--with-curl \
+--with-xsl \
+--enable-ftp \
+--with-libxml-dir \
+
+依赖包安装：
+rpm -qa freetype-devel libpng-devel gd-devel libcurl-devel libxslt-devel libxslt-devel zlib libxml libjpeg freetype libpng gd curl libiconv zlib-devel libxml12-devel libjpeg-devel freetype-devel libpng-devel curl-devel
+
+make && make install
+
+
+其中libiconv-devel 以及libxml       libxml12-devel  可能yum源里面找不到，需要上网查找
+
+
+apache配置 修改httpd-vhost.conf   //要先在httpd.conf文件中将include  配置文件的路径打开注释。
+
+<VirtualHost *:80>
+    ServerAdmin 958672189@qq.com
+    DocumentRoot "/var/html/blog"
+    ServerName blog.love.com
+    ErrorLog "logs/blog-error_log"
+    CustomLog "|/usr/local/sbin/cronolog /app/logs/access_bbs_%Y%m%d.log" combined
+</VirtualHost>

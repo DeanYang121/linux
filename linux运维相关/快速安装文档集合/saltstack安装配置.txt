@@ -1,0 +1,328 @@
+1.安装依赖包
+yum install python-jinja2
+yum install -y python-setproctitle
+3.安装saltstack
+只需要一台安装master即可，其他的全部安装minion.
+3.1 安装salt-master
+yum -y install salt-master
+2.2 安装salt-minion
+yum -y install salt-minion 
+
+=====================================
+配置minon:
+vim /etc/salt/minion
+master: 192.168.196.144
+
+id是唯一标识符：
+唯一标识符，不配就是主机名:	不建议经常换id，否则容易出问题，要改就要删除这个文件
+
+systemctl start salt-minion
+minion启动之后会生成新的文件夹pki：
+[root@mystore4 salt]# pwd
+/etc/salt
+
+[root@mystore4 salt]# tree pki
+pki
+└── minion
+    ├── minion.pem
+    └── minion.pub
+
+启动master：
+[root@mystore2 salt]# tree pki
+pki
+├── master
+│?? ├── master.pem
+│?? ├── master.pub
+│?? ├── minions
+│?? ├── minions_autosign
+│?? ├── minions_denied
+│?? ├── minions_pre
+│?? │?? └── mystore4  
+│?? └── minions_rejected
+└── minion
+
+[ERROR   ] Error parsing configuration file: /etc/salt/master - conf should be a document, not <type 'str'>.
+错误原因： interface: 192.168.196.144  中间少了一个空格 
+==================================
+认证-a/通配符参数，-A 同意所有 ：
+
+salt-key -a mystore2
+同意之后，公钥位置改变。
+[root@mystore2 salt]# tree pki
+pki
+├── master
+│?? ├── master.pem
+│?? ├── master.pub
+│?? ├── minions
+│?? │?? └── mystore2
+│?? ├── minions_autosign
+│?? ├── minions_denied
+│?? ├── minions_pre
+│?? │?? └── mystore4
+│?? └── minions_rejected
+└── minion
+    ├── minion_master.pub
+    ├── minion.pem
+    └── minion.pub
+
+salt-key -A
+=========================================================
+基础命令使用：
+     salt '*' test.ping
+
+模块.函数‘命令’
+salt "mystore4" cmd.run 'w'
+
+salt '*' cmd.run 'ls -l /home'
+
+salt '*' cmd.run 'systemctl restart zabbix-agent'
+1.远程执行 salt '*' cmd.run 'uptime'
+2.State 你要写一个描述文件。格式：YAML 后缀 .sls
+YAML:三板斧
+	1.缩进
+		2个空格，不能使用Tab
+	2.冒号 key: value
+	3.短横线 - list
+修改了配置文件需要重启master
+systemctl restart salt-master
+=====================================================
+mkdir -p /srv/salt/web
+vim apache.sls
+[root@mystore2 web]# cat apache.sls 
+apache-install:
+  pkg.installed:
+    - names:
+      - httpd
+      - httpd-devel
+
+apache-service:
+  service.running:
+    - name: httpd
+    - enable: True
+以上操作请在maste上操作。
+========================================================
+salt 'mystore4' state.sls web.apache
+等待执行完成
+
+
+到mystore4：
+[root@mystore4 salt]# pwd
+/var/cache/salt
+
+[root@mystore4 salt]# tree
+.
+└── minion
+    ├── accumulator
+    ├── extmods
+    ├── files
+    │?? └── base
+    │??     └── web
+    │??         └── apache.sls
+    ├── highstate.cache.p
+    ├── proc
+    └── sls.p
+==========================================
+master配置文件的top：
+打开注释：state_top: top.sls
+top在base目录下：
+
+cd /srv/salt/
+vim top.sls
+
+高级状态，通过top file当做入口文件
+
+salt 'mystore4' state.highstate test=True
+使用test=True，会返回即将执行的修改，但不会直接修改。
+生产中最好不要用*去匹配服务器
+
+salt消息的pub发布系统端口：4505 ，salt所有命令都连接在这个端口
+salt消息的rep系统端口：4506 ，salt所有客户端执行命令后返回的信息发送到这个端口
+lsof -i: 4505
+
+
+grains的信息：
+salt 'mystore4' grains.items
+
+查看ip地址：
+[root@mystore2 salt]# salt 'mystore4' grains.item fqdn_ip4
+mystore4:
+    ----------
+    fqdn_ip4:
+        - 127.0.0.1
+
+使用-G，grains规则的配置主机（如下为操作系统为CentOS的系统执行命令）:
+
+[root@mystore2 salt]# salt -G 'os:CentOS' cmd.run 'echo hahaha~'
+mystore2:
+    hahaha~
+mystore4:
+    hahaha~
+
+========================================
+自动义grains规则：
+[root@mystore4 salt]# vim /etc/salt/minion
+grains:
+  roles: apache
+
+
+[root@mystore2 salt]# salt 'mystore4' grains.item roles
+mystore4:
+    ----------
+    roles: 
+	  apache
+使用-G规则，重启apache服务器：
+salt -G 'roles:apache' cmd.run 'systemctl restart httpd'
+
+生产中不建议grains自动义规则写在minion中，写在：/etc/salt/grains
+
+刷新命令：
+salt '*' saltutil.sync_grains
+
+
+Saltstack 数据系统
+	Grains 谷粒
+	Pillar 柱子
+Grains： 静态数据  当Minion启动的时候收集的Minion本地的相关信息
+		   操作系统版本，内核版本，CPU，内存，硬盘，设备型号，序列号
+
+	1.资产管理，信息查询
+	2.用户目标选择	salt -G 'os:CentOS' cmd.run 'w'
+	3.配置管理中使用
+
+
+==================================
+[root@mystore2 _grains]# pwd
+/srv/salt/_grains
+
+开发一个grains：
+
+vim my_grains.py
+
+[root@mystore2 _grains]# cat my_grains.py 
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
+def my_grains():
+	#初始化一个grains字典
+	grains={}
+	grains['iaas']='openstack'
+	grains['edu']='deanyang'
+	return grains
+
+[root@mystore2 _grains]# salt '*' saltutil.sync_grains
+mystore2:
+    - grains.my_grains
+mystore4:
+    - grains.my_grains
+
+===================================
+开发grains的脚本在客户端的放置位置：
+[root@mystore4 ~]# cd /var/cache/salt/
+[root@mystore4 salt]# tree
+.
+└── minion
+    ├── accumulator
+    ├── extmods
+    │?? └── grains
+    │??     ├── my_grains.py
+    │??     └── my_grains.pyc
+    ├── files
+    │?? └── base
+    │??     ├── _grains
+    │??     │?? └── my_grains.py
+    │??     ├── top.sls
+    │??     └── web
+    │??         └── apache.sls
+    ├── highstate.cache.p
+    ├── module_refresh
+    ├── pkg_refresh
+    ├── proc
+    └── sls.p
+
+grains优先级：1.系统自带 2.grains文件写的 3.minion配置文件写的 4.自己写的
+
+================================
+配置文件中配置pillar：
+vim /etc/salt/master 
+
+# master config file that can then be used on minions.
+pillar_opts: True
+
+重启master
+
+打开pillar文件目录的注释状态：master的配置文件
+vim /etc/salt/master
+
+pillar_roots:
+  base:
+    - /srv/pillar
+
+mkdir /srv/pillar/web
+
+[root@mystore2 web]# pwd
+/srv/pillar/web
+[root@mystore2 web]# cat apache.sls 
+{% if grains['os'] == 'CentOS'  %}
+apache: httpd
+{% elif grains['os'] == 'Debian' %}
+apache: apache2
+{% endif %}
+
+上面这个格式就是jinja2模板
+===============================写一个top file========
+
+[root@mystore2 pillar]# pwd
+/srv/pillar
+[root@mystore2 pillar]# ls
+top.sls  web
+
+[root@mystore2 pillar]# cat top.sls 
+base:
+  'mystore4':
+    - web.apache
+
+刷新配置：
+salt '*' saltutil.refresh_pillar
+
+salt '*' pillar.items apache
+
+=======pillar使用场景
+1.目标选择
+
+Grains VS Pillar
+	类型	数据采集方式	   应用场景				 定义位置
+Grains  静态	minion启动时收集   数据查询	目标选择	配置管理 minion
+Pillar	动态	master自定义	   目标选择	配置管理	敏感数据 master
+
+=====列表匹配
+salt -L 'mystore2,mystory4' test.ping
+=====正则匹配
+salt -E 'mystore(2|4)' test.ping
+=====子网,IP地址匹配
+salt -S 192.168.56.12/24 test.ping
+salt -S 192.168.56.12 test.ping
+=====groups进行目标匹配
+vim /etc/salt/master
+
+nodegroups:
+  web: 'L@mystore2,mystore4'
+#  group2: 'G@os:Debian and foo.domain.com'
+
+systemctl restart salt-master
+salt -N web test.ping
+
+
+============状态模块，执行模块
+salt '*' state.single pkg.installed name=lsof
+
+========saltstack 返回的信息直接给mysql=============
+装mysql-python模块：
+1.salt '*' state.single pkg.installed name=MySQL-python
+2.salt '*' cmd.run 'yum install -y MySQL-python'
+
+
+
+
+
+
+ 

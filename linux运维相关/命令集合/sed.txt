@@ -1,0 +1,428 @@
+预习听课复习做作业---给别人讲
+
+
+取ip地址：
+
+sed -nr 's#^.*dr:(.*) Bc.*$#\1#gp'
+
+awk -F '[: ]+' 'NR==2 {print $4}'
+
+修改IP，DNS服务器网络配置：/etc/sysconfig/network-scripts/ifcfg-eth0
+/etc/resolv.conf
+
+如果配置DNS：ifcfg-eth0优于resolv。conf
+
+find /test/oldboy/ -type f -name "s.txt"|xargs sed -i 's#oldboy#oldgirl#g'  -i修改文件
+
+企业案例：
+中了木马，插入了一段脚本怎么解决？
+
+echo -n “oldboy”;"oldboy" 输出不换行
+echo -e “oldboy\tooldgirl” 识别转义字符
+
+data +%y-%m-&d
+按11-02-26显示
+
+
+tar zcvf etc-$(date +%F).tar.gz /etc
+
+
+解析命令：
+方法：反引号'' 或$()
+
+实现按周输出：date +%w
+
+date +%F -d "-2day" 以前的时间 day  hour
+
+如果ifconfig执行不了：
+
+1.执行绝对路径即可
+/sbin/ifconfig eth0
+2.临时解决法
+export PATH=$PATH:$HOME/bin:/sbin
+
+d打印三天前日期：
+
+date +%F --date "3 next day"
+
+-d的写法
+
+grep -v "^$" xx.txt 过滤空行
+
+查看全路径：which ；whereis -b； find / -type f -name "ifconfig"
+locate |head -1;locate 从一个数据库查
+
+updatedb更新数据库
+
+shutdown -h now
+halt
+reboot
+shutdown -r now
+ctrl+d
+logout
+exit
+
+ctrl + y 粘贴剪切内容
+ctrl+r 查找
+
+chmod 764 test.txt  r 4 w 2 x 1
+
+没有读权限，不能用vi cat 写入，要执行还是需要读
+
+一个文件删除不了，看上级目录，改属主，chown oldboy 目录名
+
+chown oldboy.incahome 目录
+
+特许权限位：t T 
+
+groupadd incahome
+
+userdel -r oldboy  删除用户
+ 
+useradd oldboy -g incahome
+
+useradd -g incahome oldgirl
+
+useradd test
+
+usermod -g  aaa bbb
+
+passwd username 回车输入密码：
+
+id oldboy    uid gid 组=508
+id oldgirl
+id test
+
+
+chmod 数字组合  文件名
+
+chmod [用户类型u g o] [+|-|=] rwx文件或目录
+
+chmod -R 777 oldboy/
+
+生产案例：网站的服务用户为oldboy
+
+防止木马入侵：
+文件和目录给什么权限，安全临界点：
+
+d 755 root root   没有r 其他用户可以进去可以列表，但是不能删不能改
+f 644 root root   
+
+f 666-umask
+
+
+什么是umask 作用？
+
+
+默认权限分配umask：
+
+改umask   ： umask 032 写入profile 永久生效
+
+
+默认  权限：
+基于文件：
+f 666-umask   只要是基数为加一
+
+666
+032 -
+ 1  +
+--------
+644
+
+基于目录：
+
+d 777-umask
+
+777
+032 -
+------
+745
+
+
+
+
+站点目录的文件和目录给什么权限： 
+
+
+
+setuid =4  4755   /usr/sbin/passwd 执行这个命令和属主有同样的权限
+
+
+把有setuid的执行文件都取消；
+
+
+ 
+
+和setgid位  了解
+
+
+\b 单词边缘
+\w 任意一个字符和数字
+\W 非英文字母和数字
+
+du -sh 查看目录大小
+
+chgrp -R admin /home/admins
+
+chmod g+s /admin   s:sgid   g:group
+
+粘滞位 t 
+
+chown -R ：incahome ../oldboy
+
+
+groupdel incahome
+
+group incahome -g 506 指定Uid
+
+useradd oldgirl -u 506 -g incahome
+
+useradd mmm -M -s /sbin/nologin  傀儡用户 -M不生成家目录
+
+chattr +i test.sh
+lsattr +i test.sh
+
+无法删除无法修改
+
+chattr -i tesh.sh
+
+chattr +a test.sh 只能往里面加东西，但删除不了
+
+
+setfacl  设置文件访问控制列表
+
+getfacl
+
+
+系统定时任务crond，守护进程一直运行
+crontab 设置命令 -l list -e edit
+
+：
+
+crond -l 
+
+ps -ef | grep crond
+
+
+/etc/logroate.d 定时任务存档点
+ls -l /etc/|grep cron
+
+
+用户的定时任务：
+
+crontab -l   显示
+同步时间
+
+crontab -e  === vi /var/spool/cron/root编辑
+crontab -l ===cat /var/spool/cron/root
+
+cat /etc/crontab
+
+30 3,12 * * * /bin/.sh  每天凌晨3点和中午12点半时刻，执行脚本
+
+30 */6 * * * /bin/sh/.sh 每隔6个小时的半点时刻
+ 
+45 4 1,10,22 * */.sh   每月1号10号22号，凌晨4点45 执行
+
+分时日月周
+
+>/dev/null 2>&1将输出定向到空，不管正确是错误
+
+/bin/sh /server/scripts/oldboy.sh   只要是脚本就这样  不用考虑权限
+
+没有输出最好加上>/dev/null 2>&1
+
+定时任务脚本10条箴言：
+
+1.系统自带的环境变量问题，不能识别
+
+
+用户和用户组：
+
+useradd
+userdel
+passwd
+
+chage 查看账户密码信息
+
+usermod  修改用户信息
+id
+su
+sudo
+
+/etc/skel目录作用：
+
+set|grep -i ps1
+
+PS1='[\u@\h \W]\$'
+
+修改PS1
+
+/etc/default/useradd 配置文件
+
+useradd -D -[cdefg]    -D:修改useradd默认配置
+
+useradd：
+
+修改的文件：
+/etc/passwd
+/etc/shadow
+/etc/group
+/etc/gshadow
+
+默认行为：
+/etc/default/useradd
+/etc/login.defs
+
+useradd 选项参数
+
+-c：说明 useradd -c "handsome"
+-d：指定家目录 useradd oldboy -d /opt/oldboy2
+-e: 修改时间 usermod -e “2016/09/02” xiao5 账号终止日期
+-f：
+-g：指定属于什么组
+-G ：属于多个组
+-M：不创建家目录
+-s：登录shell
+-u：指定uid
+
+
+grep -0 "\bsa\b" /etc/group 只显示有sa的哪行
+
+
+useradd -c "handsome" -u 806 -G root,oldboy,sa -s /bin/sh -d /oldboy6 oldboy6
+
+groupadd:
+/etc/group 用户组相关文件
+/etc/gshadow  用户组加密相关文件
+
+选项：-g 指定gid  500 开始
+
+echo 12346|passwd --stdin oldboy
+
+passwd --stdin oldboy <a.log
+
+passwd:
+
+-i :在密码过期后多少天，用户被禁掉，仅能以root操作
+-I：
+-x：两次密码修改的最大天数
+-l：锁定密码
+-u：解锁密码
+--stdin：读入密码
+-w：警告
+-n：最小修改密码天数
+chage -l oldboy 查看密码修改信息
+grep oldboy "oldboy\b" /etc/shadow
+
+which passwd 查看命令全路径
+
+chage:
+-l:显示账户年龄信息
+-E：chage "2016/06/11" oldboy  过期时间，将过期时间设为“过期日期“””
+
+-m：最小过期天数
+-M：最大天数
+-w：警告
+
+LDAP服务了解
+
+userdel：
+
+/etc/passwd 用户账户资料文件
+/etc/shadow 用户账户咨询加密文件
+/etc/group  用户组咨询文件
+
+-r:删除家目录 不轻易用-r。删除前备份
+
+工作中注释掉就好了
+usermod -s /sbin/nologin oldboy
+
+usermod -s /bin/bash oldboy
+
+usermod :
+-e:用户停止时间 01/22/12
+-g：
+-G
+-s：修改shell
+-u：修改uid
+
+用户查询命令：
+需要会的：id  w who last lastlog 
+不需要知道：groups,users，newgrp
+
+
+whoami：查看当前用户
+
+
+
+w:看有哪些用户在服务器上，在做什么
+
+who：看有谁在服务器上
+
+users：显示谁登陆了
+
+last：登陆列表
+
+var/log/  日志文件
+
+
+su命令：
+切换用户角色
+su - oldboy
+su -oldboy -c pwd/或执行命令
+su - oldboy -c "touch a.txt"
+
+课后作业：liunx root 密码忘记了 如何找回来
+
+sudo命令：
+
+sudo -l ：查看用户可以使用的权限命令
+
+皇帝：root
+visudo === vi /etc/sudoers
+
+visudo -c 检查语法
+
+
+臣名：
+sudo cmd
+
+
+echo "oldboy ALL=(ALL) ALL">>/etc/sudoers
+
+
+oldboy   ALL =（ALL）    ALL
+
+set nu 显示行号在文件中
+
+网线水晶头接法：
+
+ DNS能干什么？
+A记录www.sss.com----》1.1.1.1
+cname  常备CDN服务商应用
+MX解析记录  56556@dd.com
+PTR反向解析 1.1.1.1--》www.xxx.com
+
+A记录解析过程：
+
+DNS解析流程原理：必会
+
+根服务器，全球有13台根服务器
+
+顶级域名：org，com，net
+
+
+DNS解析过程：
+
+dig @8.8.8.8 www.baidu.com +trace
+
+dig @server name tyoe
+
+
+nslookup  域名解析器 ctrl + c 退出
+
+host 
+ping
+
+

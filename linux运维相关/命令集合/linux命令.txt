@@ -1,0 +1,624 @@
+mkdir /date  创建目录
+   -m：这个参数用来指定创建目录的权限，
+   -p ：递归创建目录
+cd /到目录  再 mkdir date
+   cd -  返回的作用  切换到上一次的目录
+
+ls -ld
+   -l长轴显示
+   -d 显示目录
+
+
+
+pwd：查看路径
+
+touch xx.txt 创建文件
+
+vi 编辑器，相当于记事本，有编辑功能，但较弱
+    a或者i 进入编辑模式，按键盘的esc退出编辑模式。:wq存盘退出，:q!不保存退出
+
+
+vim  复杂编辑器，相当于，emeditor，editplus
+
+echo 打印输出内容，配合>或者>> 可以为文件覆盖及追加内容
+     echo " oldboy
+            oldgirl
+          " > xxx.txt
+
+cat 查看文件内容 
+        
+        特殊用法： 
+        亦可以进行输入：cat >>/data/xxx.txt<<EOF
+                        some text
+                        EOF      
+        EOF可以被成对替换
+
+cp xx.txt  目标路径    复制文件。。默认不能拷贝目录
+  -r 递归，用于复制目录
+  -a 拷贝目录 相当于-pdr
+  -p：连同档案的属性一起复制
+ 
+mv 目标文件 目标地址  ：mv 移动目录或者文件
+
+命令 --help 简单命令帮助查看
+
+man 命令的复杂帮助文档
+
+rmdir 删除目录
+
+rm 删除命令
+   -f：不提示删除命令，强制删除
+   -r：删除目录  
+   生产场景尽量不要使用rm，如果非要用，一定要先cp等备份
+
+  替代方法：
+  mv移动到一个临时目录，回收站。
+  find*****删除，五星的命令
+
+find /root/data/ -type f (d)
+find /root/data/ -type f -exec rm -f {} \;  {}find 查找的结果  {1..100}=1-100
+
+find /root/data -type f | xargs rm -f  管道符左边命令的输出就会作为管道符右边命令的输入
+find /root/data/ -type f ! -name "oldgirl.txt"|xargs rm -f
+
+查找-type 按文件类型查找 -name 按照名字查找，查找的内容最好用双引号括起来，！取反
+
+  ！取反 -a 并且 -o 或者
+
+
+find /root/data/ -type f -name "test.txt"|xargs sed -i 's#oldboy#oldgirls#g' ******
+sed 's#oldgirl#oldboy#g' 'find /root/data/ -type f -name "test.txt"'
+
+.：当前目录
+..：当前目录的上级目录
+
+head 取文件的前n行，默认前10行，取前3行 -n 3
+     简写就是-3
+
+tail 尾巴。取文件的后n行，默认后10行，取后3行 -n 3
+     简写就是-3 ； -f 跟踪一个文件的实时变化
+
+   seq 100 >test.txt
+
+   head -30 test.txt|tail -11
+
+awk 一门语言，过滤内容（取列），打印，删除。。linux 三剑客 老大
+    awk ‘{print $1}’ 文件   $1 第一列 ，$2 第二列
+    
+    awk -F "分隔符号" '{print $1}' 文件  
+    
+    awk '{if(NR<31 && NR>19) printf $1"\n"}' test.txt     nr：行号
+
+
+grep***** 过滤器，把想要的或者不想要的分离开。linux三剑客 老三
+          -v：排除  grep -v “oldboy” text.txt
+          —B num ：除了显示匹配的一行之外，并显示该行之前的num行
+          —A num ：除了显示匹配的一行之外，并显示该行之后的num行
+          —C num ：除了显示匹配的一行之外，并显示该行之前后之间的num行
+           -o  ：输出精度匹配的字符而不是默认的整行
+           -E过滤多个字符串,
+           -i不区分大小写
+
+grep “string” -B 12 test.txt
+
+sed*****
+sed -n '/oldboy/p' test.txt -n取消默认输出 p 打印出来 -i改变文件内容
+sed '/oldboy/d' test.txt  d 删除指定参数 oldboy参数 
+
+sed -n '20,30p' test.txt  打印20到30行  这个命令更有效率  老二 擅长行
+
+sed  替换：*****
+
+sed -i 's#oldboy#oldgirl#g' a.txt s常说的查找并替换，用一个字符串替换成另一个
+                                  g与s联合使用时，表示对当前行全局匹配替换（与下一个g的意义不同）
+    -i修改文件内容   #是分隔符，，可以用/@替换
+
+sed -r 's#(.*)# i am \1#g' test.txt
+
+
+
+   
+
+运维原则： 简单 易用 高效
+
+要学好linux运维先从排版开始
+
+ 
+   
+
+
+
+
+
+快捷键：
+
+TAB命令补全，路径补全
+
+
+
+特殊字符命令：
+>或1>重定向，会清楚文件里所有以前数据
+
+>>或1>>追加重定向，文件结尾加入内容，不会删除已有的文件内容
+
+<0 输出重定向
+<<0 追加输出重定向
+2>错误重定向
+2>>追加错误重定向
+
+
+<<追加输入重定向，箭头的指向就是数据的流向
+
+1.标准输入（stdin）：代码0，代码<或<<数据流向从右向左。
+2.正常输出（stout）：代码为1，使用>或>>。数据流向左向右
+3.错误输出（stderr）：代码为2，使用2>或2>>
+
+下面的三个方法是等价的：
+
+/dev/null 空设备 黑洞
+
+
+1)1>/dev/null  2>/dev/null
+2)****1>/dev/null 2>&1
+3)&>/dev/null
+
+
+箭头的指向就是数据的流向
+
+.
+.. 
+
+| 管道符
+
+~ 用户的家目录
+
+{} {1..100}
+
+相对路径概念：
+  不从/开始，而是从当前目录开始。
+
+绝对路径：
+  从/开始
+
+yum linux里的包管理器，帮助解决依赖问题
+    例子：yum install tree（包名） -y  调用rpm命令，如果需要依赖包，帮你下载提前安装
+          yum grouplist  然后yum groupinstall “包组”
+          yum search 关键字 或者 yum search all
+
+
+rpm -i install -v 显示输出 -h 人类可读展示
+     rpm -ivh 包名.rpm(提前下载好)
+     最大问题，依赖问题不好解决
+yum安装：
+yum install tree nmap sysstat lrzsc dos2unix -y
+
+更新补丁：
+yum update 不能轻易做  线上系统尽量不做，除非有已知的安全漏洞
+
+软件包下载下来 rpm -ivh 包名
+源代码 ./configure;make.....
+
+rpm -qa tree 查看包的信息
+
+LANG=en 解决字符集乱码
+
+tree  显示目录树结构
+
+解决复制覆盖提示问题：
+
+1./bin/cp /mnt/test.txt /tmp/
+2.\cp /mnt/test.txt /tmp/
+
+别名的原因
+
+alias 查看以及定义别名
+    例子：
+       oldboy=‘echo “Iam aaa”’引号里面应该是命令才行
+
+        别名生效的位置：root用户：/root/.bashrc
+        所有用户生效：/etc/bashrc 或/etc/profile 定义
+        生效 source /etc/profile
+
+
+unalias cp 去除别名
+
+alias cp=‘cp -i’ 添加别名
+
+临时生效，重启失效
+
+grep alias ......
+
+
+seq -s 指定序列的分隔符 -w 
+
+    
+seq 100 >text.txt
+取20到30的位置
+
+
+history  打印用户操作的历史记录
+
+快捷键：
+tab 命令或路径补全键
+Ctrl+c  中止
+ctrl+d   退出当前用户命令。相当于exit，logout
+Ctrl+l 清屏 clear
+Ctrl+a  从末尾到开头
+ctrl+e  到末尾
+Ctrl+u 光标以前的删除
+Ctrl+k 光标以后的删除
+Ctrl+shif+c/v 复制
+
+netstat -lntup|grep ssh   查看端口号
+
+查看进程：
+ps -ef 
+
+查看端口：
+
+netstat -lntup
+
+查看配置好的IP：
+
+ifconfig
+
+ip add
+
+
+SSH远程连接故障排除：
+
+1.物理链路
+
+ping server_ip  ICMP协议，默认64字节包
+
+不通：
+1.检查物理线路
+2.检查服务器防火墙
+
+2.服务是否正常
+
+telnet ip地址 22  
+
+yum install telnet -y
+
+不通： 
+1.服务器防火墙  
+2.ssh服务开启
+关闭linux防火墙的方法为：
+
+/etc/init.d/iptables stop 最好连续执行两遍
+
+3.客户端和服务端 是不是一个网段
+
+
+
+互传文件 ：windows == linux
+
+
+
+ftp/http/lrzsz/winscp
+
+包：yum install lrzsz -y
+rz 回车 选择要上传的文件（不能是目录）
+
+sz 文件 回车，下载的路径CRT指定的路径
+
+-y 覆盖
+
+
+uname -r :内核
+uname -m :32位还是64位
+uname -a ：查看所有信息
+hostname :主机名
+
+linux 多任务，多进程，多CPU，多用户
+
+useradd oldboy 添加用户 
+passwd oldboy  设置密码
+
+普通用户是$ 符号
+超级管理员# 符号
+
+whoami 查看当前是哪个用户
+
+env|grep oldboy
+
+su - root  -参数切换用户环境变量
+   从普通用户到root，需要密码，从root到普通用户无需密码
+
+
+linux 系统优化：
+
+  关闭SELinux功能
+/etc/selinux/config  文件下
+
+将其改为disable 重启生效
+
+操作前备份  操作后检查
+
+getenforce  查看setlinux的状态
+setenforce 0  设置setlinux暂时生效 1启用 0警告不启用
+
+runlevel 查看当前系统运行级别
+
+init 切换运行级别，后面接对应级别的数字
+
+init 5==startx 切换桌面环境。 需要桌面软件
+chkconfig 设定开机自启动服务
+
+q runlevel :查看当前系统运行级别
+q init：切换到运行级别，后面接对应级别的数字
+
+掌握linux系统的7中运行级别
+掌握linux系统从开机到登录之前的启动流程
+
+说出来
+
+精简开机系统启动：
+中方要的开机自启动服务：
+sshd
+rsyslog  日志信息
+network  网络接口
+crond    周期性执行系统及用户配置的任务计划
+sysstat 监测系统性能
+
+
+怎么设置？
+
+第一种：
+setup
+找到system XXXXservice  把不要的xing号取消
+
+第二方法：ntfs
+
+第三种：chkconfig --list|grep 3:on
+ 
+chkconfig --level 3 atd off
+
+ chkconfig --list|grep 3:on|awk '{print $1}'|grep -Ev "sshd|network|rsyslog|crond|sysstat"|awk'{print "chkconfig" $1 "off"}'|bash
+ 
+
+关闭防火墙：
+
+iptables -L -n 查看防火墙
+
+/etc/init.d/iptables stop
+
+
+linux安全原则：
+
+安装linux系统最小化，即选包最小化，yum安装软件包也要最小化，无用的包不装
+
+开机自启动服务最小化
+
+2.操作命令最小化
+
+3.登录linux用户最小化，平时没有需求不用root
+4.普通用户授权最小化，即只给必须的管理系统的命令
+
+5.linux系统文件及目录的权限设置最小化，禁止随意创建，更改，删
+
+
+sed -i 's#(可以用正则匹配)#\1#g' oldboy.txt
+
+把前面正则匹配的括号内的结果，在后面用\1取出来操作
+
+awk '{print $1" "$2" "$NF"}' oldboy.txt
+awk -F " :" '{print $1"-"$2" "$NF"}' oldboy.txt
+
+cat -n xxx.txt  显示行号
+
+awk ‘{if(NR>20&&NR<26) print $0}’xxxxx  $0表示整行  NR行号
+
+linux优化:
+1.建立普通账号，使用普通用户登录
+2.处理selinux
+3.处理防火墙
+4.精简开机自启动服务
+5.linux最小化安全理念。5条
+
+备份的主要作用：
+错了可恢复，可比较
+
+端口0-65535
+
+SSH优化：
+
+改端口52113
+
+122行 permitRootLogin no
+useDNS no 取消注释
+PermitEmptyPasswords no
+GSSAPIAuthencation 改为no
+ListenAddress Ip地址
+
+42行 取消注释
+
+15行 监听IP地址改成服务器内网的IP地址
+
+diff 修改的原文件  备份的文件的源文件  查看区别
+
+vimdiff 高级比较，高亮显示两个文件内容区别.....
+
+/keywords 搜索
+
+/etc/init.d/sshd reload
+
+
+/etc/sudoers.tmp   修改用户权限
+
+sudo useradd oldgirl
+
+oldboy ALL=（ALL） 命令全路径
+
+which 命令   查看命令的路径，搜索范围来自全局环境PATH
+echo $PATH
+
+export PATH="/tmp:$PATH"
+
+环境变量：
+PATH 系统路径变量，执行ls，cp等非内置命令时，系统就会查找PATH里对应的路径是否有
+
+当执行which 也是通过此变量查找
+
+临时修改：export PATH=“/tmp:$PATH” 永久修改前面临时修改命令放到/tec/profile下，使用source /etc/profile使得修改立即生效
+
+id  msn  查看用户的 各种id
+
+cp /etc/sysconfig/i18n xxxxxx 备份
+
+字符编码：
+
+sed -i 's#LANG="en_US"#LANG="zh_CN.UTF-8"#g' /etc/sysconfig/i18n  
+source /etc/sysconfig/i18n
+echo $LANG
+
+客户端也调节为UTF-8
+
+
+时间同步：
+
+date 显示时间
+
+date -s “2016/08/15 14:46”修改时间
+
+hwclock 刷到bios时钟
+
+cal 显示日历
+
+
+同步互联网时间：
+ntpdate time.nist.gov
+
+crond 定时任务
+
+echo "*/5 * * * */usr/sbin/ntpdate time.nist.gov >/dev/null 2>&1" >>/var/spool/cron/root
+
+NTP服务 自己学习
+
+
+
+export TMOUT=10 超时时间设置
+
+
+echo “export TMOUT=10”>>/etc/profile 追加进去  永久生效
+
+tail -l /etc/profile
+
+source /etc/profile
+
+history 查看历史记录 越少越安全
+   -c ：清空
+echo 123456|passwd --stdin oldboy
+给用户添加密码
+   -d num  删除第num行
+
+
+ 
+HISTSIZE=5 改历史记录数据
+
+export HISTSIZE=5
+
+永久生效 ...
+
+HISTFILESIZE 历史记录文件的命令数量变量
+
+文件描述符：
+1.表示形式为整数数字
+2.进程使用的时候会占用文件描述符
+
+
+查看默认文件描述符：
+ulimit -n
+
+第一种方法：
+ulimit -SHn 65535 调整文件描述符
+
+/etc/rc.local
+
+echo '*   - nofile 65535' >>/etc/security/limits.conf
+
+linux内核参数基础优化：
+
+调整内核参数文件/etc/sysctl.conf
+
+vim /etc//sysctl.conf
+
+sysctl -p 生效
+
+
+隐藏linux软件名及内核版本：
+
+> /etc/issue
+
+cat /dev/null > /etc/issue
+
+vi /etc/motd
+RHEL 5.8 (final)
+
+
+超级优化锁定系统重要文件：
+chattr +i /etc/passwd /etc/shadow /etc/group /etc/gshadow /etc/inittab
+
+
+清楚系统冗余账号：
+
+/etc/passwd
+
+
+grub引导菜单加密码保护：
+
+/sbin/grub-md5-crypt
+
+禁止linux系统被ping：
+
+不是必须的
+
+echo“net.”
+
+更新一些软件漏洞：
+yum install openssl openssh bash -y
+
+配置linux软件下载更新源地址：
+
+cat /etc/yum.repos.d/CentOS-Base.repo 先备份
+然后更改：
+
+wget -0 /etc/yum.repos.d/Centos-Base.repo http://mirrors.aliyun.com/repo/Centos-6.repo
+
+-o 将输出输入到指定文件
+-q 
+--spider 爬虫，检查网站是不是好的，不会下载只是检查
+-T --timeout=seconds 超时时间
+--tries = 2 指定重试的次数
+
+visudo 编辑sudo配置文件（vi /etc/sudoers）
+sudo 调兵虎符，sudo配置文件授权之后，执行命令时候需要命令前带sudo
+
+less 用法：按屏（空格，page up/page down)或者按行(回车)查看文件
+more 按屏（空格）或 按行（回车）查看文件，不能向上翻
+
+
+ps 
+locate
+export
+netstat
+ifconfig
+source
+
+tree -Ld 1 /  L显示几层 d只看目录
+
+
+/proc/cpuinfo
+/proc/mount
+/proc/memerinfo
+
+
+
+
+
+
+
+
+
+

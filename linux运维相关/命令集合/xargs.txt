@@ -1,0 +1,144 @@
+1.概述
+
+xargs从标准输入(stdin)中读取数据进行处理
+
+数据以空格进行分隔
+可以根据参数进行一次或多次处理,默认的处理命令是/bin/echo
+空行不进行处理,会被忽略
+遇到命令状态为255时,xargs会立刻停止,譬如发生错误时.
+下面我们来看看xargs有哪些参数可以选择.
+
+2.options
+
+-a file
+: 从file中读入数据
+
+$cat 1.txt
+aaa bbb ccc ddd
+a b
+$xargs -a 1.txt 
+aaa bbb ccc ddd a b
+-0
+: 当输入有特殊字符时,将其当作一般字符处理,比如""和空格
+
+$echo "// " | xargs
+//
+$echo "// " | xargs -0
+//
+　
+-d
+: 指定分隔符
+
+$cat 1.txt
+aaa bbb ccc ddd
+a b
+$cat 1.txt | xargs -d 'c'
+aaa bbb     ddd
+a b
+　
+-E eof-str
+: 指定结束标志为eof-str,xargs处理到这个标志就会停止
+
+$xargs -E 'ddd' -a 1.txt
+aaa bbb ccc
+$xargs -E 'dd' -a 1.txt
+aaa bbb ccc ddd a b
+$cat 1.txt | xargs -E 'ddd'
+aaa bbb ccc
+-I replace-str
+: 将每行输入输入内容替换为replace-str
+
+$cat 1.txt
+aaa bbb ccc ddd
+a b
+$cat 1.txt | xargs -t -I {} echo {} >> 1.txt
+echo aaa bbb ccc ddd 
+echo a b
+$cat 1.txt
+aaa bbb ccc ddd
+a b
+aaa bbb ccc ddd
+a b
+-i
+: 等同于-I{}
+
+$cat 1.txt
+aaa bbb ccc ddd
+a b
+$cat 1.txt | xargs -t -i echo {} >> 1.txt
+echo aaa bbb ccc ddd 
+echo a b
+$cat 1.txt
+aaa bbb ccc ddd
+a b
+aaa bbb ccc ddd
+a b
+-L max-lines
+: 每次读取max-line行输入交由xargs处理
+
+$cat 1.txt
+aaa bbb ccc ddd
+a b
+$cat 1.txt |xargs -L 2
+aaa bbb ccc ddd a b
+$cat 1.txt |xargs -L 1
+aaa bbb ccc ddd
+a b
+-l
+: 类似于-L,区别在于-l可以不指定参数,默认为1.
+
+-n max-args
+: 每行执行max-args个输入,默认执行所有
+
+$cat 1.txt | xargs -n 2 
+aaa bbb
+ccc ddd
+a b
+-p
+: 交互模式,执行前询问是否执行
+
+$cat 1.txt | xargs -p
+/bin/echo aaa bbb ccc ddd a b ?...y
+aaa bbb ccc ddd a b
+$cat 1.txt | xargs -p
+/bin/echo aaa bbb ccc ddd a b ?...n
+-r
+: 无输入则停止执行,默认至少执行1次
+
+$ echo ""|xargs -t mv
+mv 
+mv: missing file operand
+Try `mv --help` for more information.
+$ echo ""|xargs -t -r mv    #直接退出
+-s max-chars
+: xargs每次执行命令的最大长度(含空格)
+
+$ cat 1.txt
+aaa bbb ccc ddd a b
+$ cat 1.txt |xargs -t -s 30
+/bin/echo aaa bbb ccc ddd a b 
+aaa bbb ccc ddd a b
+#length(/bin/echo aaa bbb ccc ddd a b )=30
+$cat 1.txt |xargs -t -s 14
+/bin/echo aaa 
+aaa
+/bin/echo bbb 
+bbb
+/bin/echo ccc 
+ccc
+/bin/echo ddd 
+ddd
+/bin/echo a b 
+a b
+#length(/bin/echo aaa )=14
+-t
+: 先打印执行的命令,然后执行
+
+$cat 1.txt | xargs -t
+/bin/echo aaa bbb ccc ddd a b
+aaa bbb ccc ddd a b
+-x
+: 当xargs执行的命令长度大于-s max-char时,停止执行
+
+-P max-procs
+: 修改线程数,默认为单线程.max-procs为0时,as many processes as possible

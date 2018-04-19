@@ -1,0 +1,326 @@
+#################
+ip地址 网络位+主机位
+
+IP地址和子网掩码  都是32位。。子网掩码规定网络部分，有多少个1有多少个主机位
+8.8.8.8
+255---》11111111
+处在同一个网段中，网络位必然相同，同网段的计算机通信还需要mac地址来区分
+同网段主机通信：先发送ARP包，获取mac地址，所有设备都会收到ARP，只有目标ip地址才会返回值，
+
+不同网络通信：需要路由器或者网关。。（家用简易，专业路由，具有路由功能的主机），，
+路由：在不同网络之间传输数据的功能叫做路由功能，并且通过路由表进行数据转发
+www.sun.com  主机名 域名 类型
+ftp.sun.com 代表另一台主机
+
+DNS域名服务：ip地址和域名之间的相互转换，一般运营商的服务器会缓存全球的域名与ip地址
+
+基本网络参数：
+要配置一个局域网通信的计算机：
+ip地址
+子网掩码
+配置一个跨网段通信的计算机：
+ip地址
+子网掩码
+网关（路由）
+配置一个可上网的计算机：
+ip地址
+子网掩码
+网关（路由）
+DNS
+
+以太网链接：
+以太网接口命名为：eth0 eth1
+lspci 列出网卡的信息
+lsusb  列出usb网卡的信息
+
+ifconfig -a 查看所有接口
+ifconfig eth0 查看特定的接口
+
+ifup   启动一个接口
+ifdown 关闭一个接口
+
+网卡配置文件
+/etc/sysconfig/network-scripts/ifcfg-eth0
+DNS配置文件：
+/etc/resolv.conf
+主机名配置
+/etc/sysconfig/network
+静态主机名：
+/etc/hosts
+
+测试DNS解析：
+
+host 域名
+dig  域名
+
+显示路由表：
+
+ip route
+
+追踪到达目标地址的网络路径
+traceroute 域名
+
+使用mtr进行网络质量测试（结合了traceroute 和 ping）
+mtr 域名
+
+故障排查：网络故障排查遵循从底层到高层，从自身到外部
+先查看网络配置信息是否正确：
+ip地址
+子网掩码
+网关
+DNS
+ 
+查看到网关是否联通
+ping 网关ip地址
+
+查看DNS解析是否正常
+host 域名
+
+网卡高级命令：
+命令mil-tool用以查看网卡状态： 查看网卡的工作速率
+mil-tool eth0
+底层排错
+
+命令ethtool命令：
+ethtool eth0 查看网卡物理特性
+ethtool -i eth0 查看网卡驱动信息
+ethtool -s eth0 查看网卡状态（底层的状态）
+
+IP别名：
+linux支持在一个物理网卡上配置多个ip地址，用来实现类似子接口之类的功能，称之为ip别名
+
+Centos或RHEL系统默认会启动NetWorkManager对网卡管理，以方便用户使用，但是如果使用子接口需要禁用networkmanager
+
+service NetworkManager stop
+chkconfig NetworkManager off
+
+用ip命令临时创建一个ip别名
+ip addr add 10.1.1.1/24 dev eth0 label eth0:0
+eth0:0中第二个0为别名编号，第二个可以命名为eth0:1
+
+永久添加ip别名：
+/etc/sysconfig/network-scriprts
+
+配置文件名 ：vim ifcfg-eth0:0
+
+内容：
+DEVICE=eth0:0
+IPADDR=10.1.1.1
+PREFIX=24
+ONPARENT=yes
+
+多网卡绑定：
+
+linux支持将多块物理网卡绑定为一个逻辑网卡，绑定后的逻辑网卡可以并行使用组成七的所有物理网卡，通过这样的方式用以提高带宽及稳定性
+
+绑定后物理网卡不再直接使用，ip地址配置在绑定后的逻辑网卡上
+
+linux支持以下的网卡绑定模式：
+模式0：平衡轮询   平均分配流量
+模式1：主动备份
+模式3：广播
+
+网卡绑定配置：
+绑定后的逻辑网卡命名为bondn，n为编号，如/dev/bond0,/dev/bond1
+
+创建绑定网卡的配置文件：
+/etc/sysconfig/network-scripts/ifcfg-bond0
+
+DEVICE=bond0
+IPADDR=192.168.1.200
+PREFIX=24
+ONBOOT=yes
+BOOTPROTO=none
+USERCTL=no
+BONDING_OPTS="mode=1 milmon=50"
+
+之后修改每个属于该逻辑网卡的物理网卡的配置信息：
+etc/sysconfig/network-scripts/ifcfg-rth0
+
+DEVICE=eth0
+ONBOOT=yes
+BOOTPROTO=none
+MASTER=bond0
+SLAVE=yes
+USERCTL=no
+
+然后bond网卡添加驱动支持
+/etc/modprobe.d/bonding.conf
+
+alias bond0 bonding
+
+
+RPM：
+安装软件：
+
+rpm -i xx.rpm  安装软件
+
+rpm -e xx.rpm  卸载软件
+
+rpm -U xx.rpm 升级形式安装
+
+支持http，ftp协议安装软件
+
+-v 显示相信信息
+-h 显示进度条
+
+rpm -qa 列出所有安装的rpm包
+
+RPM验证
+导入秘钥：
+rpm --import RPM-GPG-KEY-CentOS
+验证rpm文件：
+rpm -K software.rpm
+
+验证已安装软件：
+
+rpm -V software
+
+YUM仓库：
+/etc/yum.repos.d/目录下，格式如下：
+
+[linuxCast]
+name=this is linuxca rpm soft repo
+baseurl=http://wwww///rpms/
+enable=1
+gpgcheck=1
+ 
+1代表启动  gpgcheck表示是否启动检查
+yum配置文件必须以.repo结尾
+
+一个配置文件内可以保存多个仓库配置信息
+/etc/yum.repos.d/ 目录下可以存在多个配置文件
+
+yum install software 安装软件
+yum remove software 卸载软件
+yum update xxx  更新软件
+
+创建yum仓库：
+
+手工创建yum仓库：
+1.将所有rpm文件拷贝到一个文件夹linuxcast中
+2.通过rpm命令手工安装createrepo软件
+3.运行命令createrepo -v /linuxcast---->产生repodata
+cd /etc/yum.repos.d
+
+创建一个.repo结尾的文件，并编辑。。
+[yangdi]
+name=this is linuxca rpm soft repo
+baseurl=file:///linuxcast-yum/
+#enable=1
+#gpgcheck=1
+
+yum clean all  清除缓存
+
+yum list 查看软件列表
+
+
+4.如果有分组信息，则在运行命令的时候使用-g参数指定分组文件
+
+createrepo -g /tmp/*comps.xml/linxucast/
+
+centos的分组信息保存在光盘repodata/目录下，文件名以comps.xmljiewie de wenjian 
+
+创建好之后本机可以通过file
+
+iptables命令创建一个规则，一条规则包含以下几个部分：
+
+iptables -t filter -A INPUT -s 192.168.1.1 -j DROP
+
+表 链 匹配属性 动作
+
+基本操作：
+
+列出现有iptables的规则：
+iptables -l
+
+插入一个规则：
+
+iptables -I INPUT 3 -p tcp --dport 22 -j ACCEPT
+
+删除一个iptables规则：
+iptables  -D INPUT 3
+iptables -D INPUT -s 192.168.1.2 -j DROP
+
+
+匹配参数：
+基于ip地址：
+-s 10.0.0.1   源地址
+-d 10.0.0.0/8  目标地址
+
+基于接口：
+-i eth0
+-o eth1
+
+排除参数：
+-s "!" 192.168.1.0/24
+基于协议及端口
+
+控制到本机的网络流量：
+
+iptables -A INPUT -s 192.168.1.100 -j DROP
+
+iptable -A INPUT -p tcp --dprop 80 -j DROP
+
+iptable -A INPUT -s 192.168.1.0/24 -p tcp --dport22 -j DROP
+
+iptables -A INPUT -i eth0 -j ACCEPT
+
+如果linux作为路由使用，可以通过定义forward规则来进行转发控制
+
+如：禁止192.168.1.0/24到10.1.1.0/24的流量：
+iptables -A FORWARD -s 192.168.1.0/24 -d 10.1.1.0/24 -j REJECT
+
+NAT 分为两种：
+SNAT 源地址转换，通常用于伪装内部地址
+DNAT 目标地址转换，通常用于跳转
+
+NAT表
+
+###################################
+
+read 读取一个用户的输入
+
+#/bin/bash
+#注释
+
+echo -n "input your name"   -n:表示不换行
+read NAME
+echo "hello."$NAME" ."
+
+###########
+
+echo "The first parameter":$1
+
+环境变量
+HOME LANG SHELL PATH PS1 PS2（辅助提升符）
+echo $HOME
+
+echo PS1 [\u@\h \W]\$ 用户名@主机名 当前路径
+
+修改环境变量以后，最好在export LANG=en 一下，定义到当前shell中
+
+使用set命令，系统环境变量：set
+
+/etc/profile 全局变量初始化
+.bash/profile
+
+
+
+
+位置变量：$1-9
+预定义变量: 预先定义的变量
+$0 脚本的名字
+$* 所有的参数
+$$ 脚本进程号
+$# 传递参数个数
+$? 返回上一个脚本是否执行成功0 失败1
+$! 后台运行最后一个进程的pid号
+
+自定义变量：
+
+expr 数据类型转换：
+A=11
+B=12
+
+expr A+B

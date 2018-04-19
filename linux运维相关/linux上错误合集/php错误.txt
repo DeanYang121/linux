@@ -1,0 +1,15 @@
+/application/php/bin/是php的安装目录
+切换到php安装目录的etx/openssl目录
+
+
+cd /home/dean/tools/php5./ext/openss
+改文件名
+cd /root/soft/php-5.2.8/ext/openssl
+
+引用
+/usr/local/bin/phpize
+Cannot find config.m4. 
+Make sure that you run '/usr/local/bin/phpize' in the top level source directory of the module
+
+查看openssl目录下有个config.w32和config0.m4，把config0.m4改名为config.m4。
+mv config0.m4 config.m4

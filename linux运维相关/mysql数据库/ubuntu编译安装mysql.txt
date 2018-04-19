@@ -1,0 +1,71 @@
+root@code:/application/mysql# /etc/init.d/mysqld start
+[....] Starting mysqld (via systemctl): mysqld.serviceFailed to start mysqld.service: Unit mysqld.service not found.
+ failed!
+
+
+删除 MySQL
+sudo apt-get autoremove --purge mysql-server-*
+sudo apt-get remove mysql-server
+sudo apt-get autoremove mysql-server
+sudo apt-get remove mysql-common
+=========================================
+ubuntu16.04 编译安装mysql5.7.x，以及配置使用 
+http://www.cnblogs.com/xz1024/p/5802637.html 
+MySQL root密码重置报错：mysqladmin: connect to server at ‘localhost’ failed的解决方案！ 
+http://blog.csdn.net/mchdba/article/details/10630701 
+http://www.2cto.com/database/201309/240558.html
+
+CENTOS6.6下mysql5.7.11带boost和不带boost的源码安装 
+http://www.cnblogs.com/galengao/p/5755788.html
+
+初窥InnoDB的Memcached插件https://huoding.com/2013/08/20/279#comment-390716 
+MySQL 5.7.12源码安装实例http://blog.csdn.net/u010257584/article/details/51315438 
+http://blog.163.com/yumin_wang@126/blog/static/3629355020165237375714/ 
+无法找到软件包 libncurses5-dev 的解决方法http://blog.csdn.net/huangshizeng/article/details/6933409
+
+Wu_Being 博客声明：本人博客欢迎转载，请标明博客原文和原链接！谢谢！ 
+《Ubuntu16.04 通过源码编译安装 MySQL 5.7.17》http://blog.csdn.net/u014134180/article/details/60467658
+
+=========下载mysql-5.7.18.tar.gz===========
+
+首先    ： sudo apt-get update
+第一步： sudo apt-get install cmake -y 搭建跨平台安装（编译工具）
+第二步： apt-get install git -y
+第三步：sudo apt-get install gcc g++ -y (一般来说我们使用的UBUNTU自带的) 
+第四步：安装LINUX常用图形库
+        apt-get install libncurses5 libncurses5-dev -y
+第五步：预编译参数
+下载一个boost包，放到/usr/local/boost目录下，然后在cmake后面加选项-DWITH_BOOST=/usr/local/boost/
+
+tar -xf mysql-5.7.18.tar.gz
+cd mysql-5.7.18
+cmake . -DCMAKE_INSTALL_PREFIX=/application/mysql-5.7.18\
+-DWITH_BOOST=/usr/local/boost/ \
+-DMYSQL_DATADIR=/application/mysql-5.7.18/data \
+-DMYSQL_UNIX_ADDR=/application/mysql-5.7.18/tmp/mysql.sock \
+-DDEFAULT_CHARSET=utf8 \
+-DDEFAULT_COLLATION=utf8_general_ci \
+-DEXTRA_CHARSETS=gbk,gb2312,utf8,ascii \
+-DENABLED_LOCAL_INFILE=ON \
+-DWITH_INNOBASE_STORAGE_ENGINE=1 \
+-DWITH_FEDERATED_STORAGE_ENGINE=1 \
+-DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
+-DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
+-DWITHOUT_PARTITION_STORAGE_ENGINE=1 \
+-DWITH_FAST_MUTEXES=1 \
+-DWITH_ZLIB=bundled \
+-DENABLED_LOCAL_INFILE=1 \
+-DWITH_READLINE=1 \
+-DWITH_EMBEDDED_SERVER=1 \
+-DWITH_DEBUG=0
+
+
+application/mysql/bin/mysqld_safe --skip-grant-tables
+/application/mysql/bin/mysql -u root
+flush privileges;
+alter user 'root'@'localhost' identified by '1234567';
+flush tables;
+quit
+
+====================
+

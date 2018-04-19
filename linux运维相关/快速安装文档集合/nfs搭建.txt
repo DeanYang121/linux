@@ -1,0 +1,51 @@
+服务端：
+0.准备工作：
+   cat /etc/redhat-release 查看服务器版本
+   Uname -r 查看内核版本信息
+   Uname -m 查看操作系统位数
+1.NFS服务器搭建和挂载
+rpm -qa nfs-utils rpcbind 查看服务器是否安装了这两个软件
+yum install nfs-utils rpcbind -y
+rpm -qa nfs-utils rpcbind 确认是否安装成功
+/etc/init.d/rpcbind status 检查rpcbind服务状态
+/etc/init.d/rpcbind start 启动服务
+/etc/init.d/rpcbind status 
+lsof -i :111 查看该端口是什么服务
+netstat -lntup | grep rpcbind 查看服务信息
+chkconfig --list rpcbind 
+rpcinfo -p localhost 查看端口映射
+#######################################
+/etc/init.d/nfs status 查看nfs信息
+/etc/init.d/nfs start 启动nfs服务
+rpcinfo -p localhost 查看端口映射
+ps -ef|egrep “rpc|nfs” ： egrep = grep -E  匹配正则表达式
+设置开机自启：
+   chkconfig rpcbind on
+   chkconfig nfs on
+   chkconfig --list rpcbind\nfs 查看是否成功设置
+   chkconfig --list | egrep “nfs\b|rpcbind”
+配置/etc/exports文件：
+   /data 192.168.110.0/24(rw,sync,all_squash)
+   mkdir -p /data
+   chown -R nfsnobody.nfsnobody /data
+   grep nfsnobody /etc/passwd	
+   /etc/init.d/nfs reload    平滑启动==exportfs -rv
+   showmount -e localhost	查看本地挂载情况
+   mount -t nfs 192.168.110.128:/data /mnt
+   df -h   查看挂载情况
+客户端：
+yum install rpcbind nfs-utils -y
+rpm -qa rpcbind nfs-utils	安装nfs服务，可以使用showmount功能
+/etc/init.d/rpcbind start
+/etc/init.d/rpcbind status
+showmount -e 192.169.110.128
+mkdir -p /dataweb1
+mount -t nfs 192.168.110.128:/data /dataweb1
+df -h 
+mount		查看挂载信息
+mkdir -p /dataweb1/web1 测试
+ls -l /dataweb1
+
+echo “/etc/init.d/rpcbind start” >>/etc/rc.local
+echo “/bin/mount -t nfs 192.168.110.128:/data /dataweb1” >>/etc/rc.local
+tail -2 /etc/rc.local

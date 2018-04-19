@@ -1,0 +1,93 @@
+$RANDOM
+
+RANDOM是bash的一个内建函数，会返回一个[0, 32676]内的整数。
+我们可以设置seed来得到相同的随机数，也可以为了尽量随机而每次设置不一样的seed。
+
+$ RANDOM=10
+$ echo $RANDOM
+31855
+$ RANDOM=$(date +%s)
+$ echo $RANDOM
+6676
+生成[beg,end)范围内的随机数可以这样写:
+
+function random_range() {
+    local beg=$1
+    local end=$2
+    echo $((RANDOM % ($end - $beg) + $beg))
+}
+
+生成1-n的随机数。
+echo $(RANDOM/n+1)
+
+方法2：通过openssl产生随机数，示例代码如下。
+
+[root@oldboy scripts]# openssl rand -base64 8
+
+F0hRoLu9o8c=
+
+[root@oldboy scripts]# openssl rand -base64 80
+
+Q6EzRQfqdvTBIF6W+1ARi8auIZOEp73NOBo38phak5syEsNKUGAzNrUKQvMJjiFq
+
+RFcvd7ExfofD1ho844iX3XGlesgdn
+
+令数字与大小写字符相结合，并且带上特殊字符，可以达到很长的位数，这样的随机数很安全。
+
+方法3：通过时间（date）获得随机数，示例代码如下。
+
+[root@oldboy scripts]# date +％s％N
+
+1473061480765110440
+
+方法4：通过/dev/urandom配合chksum生成随机数。
+
+示例代码如下：
+
+[root@oldboy scripts]# head /dev/urandom|cksum
+
+1595867971 3433
+
+方法5：通过UUID生成随机数。
+
+示例代码如下：
+
+[root@oldboy scripts]# cat /proc/sys/kernel/random/uuid
+
+54b63594-98f3-4f41-b50f-3
+
+方法6：使用expect附带的mkpasswd生成随机数。
+
+mkpasswd命令依赖于数据包expect，因此必须通过“yum install expect–y”命令先安装该数据包：
+
+[root@oldboy scripts]# mkpasswd -l 9 -d 2 -c 3 -C 3 -s 1
+
+pHKtjK(53
+
+相关参数说明如下：
+
+-l # (length of password, default = 9) #<==指定密码长度。
+
+-d # (min # of digits, default = 2) #<==指定密码中数字的数量。
+
+-c # (min# of lowercase chars, default = 2) #<==指定密码中小写字母的数量。
+
+-C # (min # of uppercase chars, default = 2) #<==指定密码中大写字母的数量。
+
+-s #(min # of special chars, default = 1) #<==指定密码中特殊字符的数量。
+
+
+
+上面的随机数长短不一，如何统一格式化呢？解答：使用md5sum命令。
+
+[root@oldboy scripts]# mkpasswd -l 9 -d 2 -c 3 -C 3 -s 1|md5sum|cut -c 2-10
+
+d81978b70
+
+[root@oldboy scripts]# cat /proc/sys/kernel/random/uuid|md5sum|cut -c 2-10
+
+292127444
+
+
+
+

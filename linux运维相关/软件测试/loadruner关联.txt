@@ -1,0 +1,28 @@
+首先：打开view--snappot视图窗口，然后再http Data里面搜索需要关联的值，一般需要关联的值
+在Response Body里面去找
+
+找到以后点解create crrleation
+
+点击colleration
+
+
+检查点：
+
+在snapshot，的page view 视图找到关键词，右键添加检查点，判断是否成功登录
+
+
+创建场景测试：
+添加负载机，load generator ，name添加ip地址，connect链接
+
+并发数/响应时间约等于TPS
+
+监控：
+
+操作系统：nmon
+中间件：jconsole，visualvm（JVN监控）
+数据库：AWR，SQL 需要sys用户权限
+
+
+
+
+

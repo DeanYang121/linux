@@ -1,0 +1,71 @@
+一下步骤在lb1_LVS1和lb2_LVS2上同时操作：
+
+keepalive  yum安装就行
+
+vi /etc/sysctl.conf
+net.ipv4.ip_forward = 1  打开路由转发功能
+sysctl -p
+
+安装LVS：
+yum -y install ipvsadm
+
+配置keepalive.conf
+genhash -s 192.168.196.130 -p 80 -u /test.html   生成检查的秘钥。对业务进行检查。应用层。
+
+在后端服务器web1和web2上禁用arp对虚拟ip的响应。使用的命令：
+vi /etc/sysctl.conf
+
+#####dean######
+net.ipv4.conf.eth0.arp_ignore = 1
+net.ipv4.conf.eth0.arp_announce = 2
+net.ipv4.conf.all.arp_ignore = 1
+net.ipv4.conf.all.arp_announce = 2
+
+sysctl -p
+
+
+同样在后端服务器：
+
+ifconfig lo:0 192.168.196.55 netmask 255.255.255.255 broadcast 192.168.196.55 up
+route add -host 192.168.196.55 dev lo:0
+
+启动负载均衡服务器：keepalive
+
+监控选项:
+[root@lb1 ~]# cat /proc/net/ip_vs
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port Forward Weight ActiveConn InActConn
+TCP  C0A8C437:0050 wrr 
+  -> C0A8C483:0050      Route   10     0          0         
+  -> C0A8C485:0050      Route   10     0          0         
+[root@lb1 ~]# cat /proc/net/ip_vs_stats 
+   Total Incoming Outgoing         Incoming         Outgoing
+   Conns  Packets  Packets            Bytes            Bytes
+      70      2A7        0            1094B                0
+
+ Conns/s   Pkts/s   Pkts/s          Bytes/s          Bytes/s
+       0        0        0                0                0
+
+
+排错：
+ip address show eth0
+
+ipvsadm -ln --sort
+
+查看keepalive的日志：默认是在/var/log/message
+
+检查后端服务器是否可单独访问吗
+
+检查服务器的arp设置是否生效
+sysctl -A|grep -E "arp_ignore|arp_announce"
+
+检查后端服务器的虚拟IP是否绑定成功
+ip address show lo
+route -n
+
+测试
+
+
+ 
+

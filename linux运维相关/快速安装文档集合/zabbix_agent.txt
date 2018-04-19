@@ -1,0 +1,21 @@
+http://www.ttlsa.com/zabbix/zabbix-convert-into-chinese-8-ttlsa/
+
+rpm -ivh https://mirrors.aliyun.com/zabbix/zabbix/3.0/rhel/6/i386/zabbix-release-3.0-1.el6.noarch.rpm
+
+yum install zabbix -y
+
+安装完以后：改密码 第一件事
+机制：agent发数据
+server接受数据
+mysql存数据
+
+
+zabbix还可以用snmp监控，不只是用agent监控
+
+监控模板：
+zabbix监控是由监控项组成的，cpu，memory等等，把主机和模板关联起来就
+
+sed -i "1a"
+sed -i "1d"
+find type f --name "*.php"|xargs
+sed "ls///"

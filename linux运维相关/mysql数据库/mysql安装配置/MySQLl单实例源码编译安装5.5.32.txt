@@ -1,0 +1,76 @@
+1.3 安装相关包
+1.3.1 cmake软件
+cd /home/oldboy/tools/
+tar xf cmake-2.8.8.tar.gz
+cd cmake-2.8.8
+./configure
+#CMake has bootstrapped.  Now run gmake.
+gmake
+gmake install
+cd ../
+
+1.3.2 依赖包
+yum install ncurses-devel -y
+
+1.4 开始安装mysql
+1.4.1 创建用户和组
+groupadd mysql
+useradd mysql -s /sbin/nologin -M -g mysql
+
+1.4.2 解压编译MySQL
+tar zxf mysql-5.5.15.tar.gz 
+cd mysql-5.5.15
+cmake . -DCMAKE_INSTALL_PREFIX=/application/mysql-5.5.15\
+-DMYSQL_DATADIR=/application/mysql-5.5.15/data \
+-DMYSQL_UNIX_ADDR=/application/mysql-5.5.15/tmp/mysql.sock \
+-DDEFAULT_CHARSET=utf8 \
+-DDEFAULT_COLLATION=utf8_general_ci \
+-DEXTRA_CHARSETS=gbk,gb2312,utf8,ascii \
+-DENABLED_LOCAL_INFILE=ON \
+-DWITH_INNOBASE_STORAGE_ENGINE=1 \
+-DWITH_FEDERATED_STORAGE_ENGINE=1 \
+-DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
+-DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
+-DWITHOUT_PARTITION_STORAGE_ENGINE=1 \
+-DWITH_FAST_MUTEXES=1 \
+-DWITH_ZLIB=bundled \
+-DENABLED_LOCAL_INFILE=1 \
+-DWITH_READLINE=1 \
+-DWITH_EMBEDDED_SERVER=1 \
+-DWITH_DEBUG=0
+
+#-- Build files have been written to: /home/oldboy/tools/mysql-5.5.32
+提示，编译时可配置的选项很多，具体可参考结尾附录或官方文档：
+make -j 2  注：-j 用来指定CPU核心数，可加快编译速度，不加也可以
+#[100%] Built target my_safe_process
+make install
+ln -s /application/mysql-5.5.32/ /application/mysql
+如果上述操作未出现错误，则MySQL5.5.32软件cmake方式的安装就算成功了。
+
+ln -s /application/mysql-5.5.32 /application/mysql
+cp mysql-5.5.32/support-files/my-small.cnf /etc/my.cnf
+echo 'export PATH=/application/mysql/bin:$PATH' >>/etc/profile
+tail -1 /etc/profile
+source /etc/profile
+
+chown -R mysql.mysql /application/mysql/data
+chmod 1777 /tmp/
+cd /application/mysql/scripts/
+./mysql_install_db   --basedir=/application/mysql/ --datadir=/application/mysql/data/ --user=mysql
+初始化怎么判断是否成功，两个ok
+修改主机名，hostname，在/etc/hosts,在127这行加入主机名
+/bin/cp support-files/mysql.server /etc/init.d/mysqld
+chmod +x /etc/init.d/mysqld
+/etc/init.d/mysqld start
+netstat -lntup|grep mysqld
+
+登录mysql故障解决：
+不能登录：
+pkill mysqld
+lsof -I :3306
+rm -rf /application/mysql/data
+重新初始化
+
+
+
+

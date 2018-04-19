@@ -1,0 +1,594 @@
+手机害人！游戏害人！
+电脑主机组成：主板，1CPU，1内存，1硬盘，显卡，声卡等
+电源，服务器一般都提供双电源
+CPU
+BIOS芯片：电脑一开机，就读BIOS，负责主板通电后各部件自检，设置，保存，一切正常后才能启动操作系统。常见三种BIOS：Award...
+总线扩展槽：插槽
+I/O接口：
+硬盘：ssd>sas>sata   决定网站访问速度快不快
+风扇：给CPU降温，可能导致死机
+内存条：影响电脑数据传输的快慢
+CPU 硬盘 内存条  优化
+
+
+cpu（L1 L2 CACHE）---内存---ssd固态盘---普通硬盘  服务器硬件性能排序
+
+优化网站，服务器的关键：尽量使用内存
+
+1.解决浏览网页的压力，读压力：写压力小，读压力大，直接写入磁盘，读入内存，提供给客户访问
+2.解决微信，微博 应用 写压力较大的业务：先写入内存，根据企业能够接受的数据丢失程度，选择频率写到磁盘。
+
+更高的要求：即写到内存，又不希望数据丢失？
+宕机最根本的原因：没电了
+使用UPS不间断电源，主板安装FLUSH电池：当服务器宕机没电了，利用电池供电，把内存数据刷到磁盘
+
+写入数据到内存，成为缓冲区（buffer）
+从内存读取数据，内存空间（cache）
+
+1.常规正式场合选SAS
+2.不对外提供访问的服务器，线下数据备份，可选SATA。便宜，容量大，但速度比较慢
+3.高并发，小数据量，可选择SSD
+
+淘宝网企业案例：服务器会把sata和ssd结合起来用，热点存储，程序动态调度。结合使用
+
+面试会考：DELL阵列卡（RAID卡 0 1 5 10）：
+
+装系统：淘汰光驱，U盘安装系统，网络安装（ftp，http）
+
+南桥芯片负责？北桥芯片负责？
+
+GPL全称：General Public License 通用公共许可 开源社区最著名的linux内核实在GPL许可发布的。
+GPL许可的核心，是保证任何人有共享和修改自由软件的自由，任何人有权取得，修改和重新发布自由软件的源代码权利，但都必须同时给出具体更改的源代码
+linux内核是基于GUN通用公共许可的，但是linux内核并不是GUN计划的一部分。
+
+linux核心概念知识：
+  自由软件：没有商业化软件版权制约，源代码开放，无约束自由传播
+  red hat linux 自由但不免费  CentOS linux 是自由免费
+linux发现版本的介绍：
+linux kernel2.2  2.4  2.6
+linux发行商：redhat debian fedora suse centos ubuntu 红旗 麒麟 turbolinux mandrake
+
+面试会问到：Redhat与CentOS的区别和联系：源代码去除LOGO以及非自由的软件部分后在编译版
+
+FSF自由软件基金会：
+主要项目是GUN项目。本身产生的主要软件主要包括：Emacs编辑软件，gcc编译软件，bash命令介绍程序和编程语言，以及gawk等
+
+centOS6系列：64位的系统版本是企业主流版本6.4或6.6的64位x86_64
+
+企业为什么选择64位系统：1.32位系统为普通用户设计的。64位满足一个更高要求的领域：三维设计，机械设计。视频编辑
+2.安装配置不同。64位的操作系统只能安装在64位的电脑上（CPU必须是64位的）
+3.运算速度不同
+4.寻址能力不同
+
+linux系统磁盘分区知识简介：
+1.磁盘在使用前一半要先分区。
+2.磁盘有主分区，扩展分区，逻辑分区。一块磁盘最多可以有4个主分区，其中一个主分区的位置可以用一个扩展分区替换，在这个扩展分区内可以分多个逻辑分区
+3.如果规划的分区数量超过四个：P+E的数量《=4 e最多一个  可以没有  但不能直接使用 。则分区组合为3主+1扩展分区（2个逻辑分区）或者2个主+1扩展（3个逻辑）或者1主1扩展（4个逻辑分区） 括号里面是5个分区的情况
+
+linux分区要求：
+1）/根分区
+用来存放系统文件及程序，其大小至少在5GB以上
+2）要有一个swap交换分区，swap分区的大小一般为物理内存容量的1.5倍
+但当系统物理内存大于8GB时，swap分区配置8-16G即可，不是必须，但设置比较好
+3）/boot分区，这是linux系统的引导分区，用于存放系统引导文件，如linux内核，所有文件总大小一般只有几十到几百兆
+
+
+磁盘设备命名：
+IDE： /dev/hd*
+      hda第一块盘
+             hda1，hda2...分区   
+      hdb第二块盘
+SCSI: SAS/SATA/SSD
+      /dev/sd*
+      sda第一块盘
+             sda1，sda2...分区
+      sdb第二块盘
+
+分区的编号1-4，只能给P+E
+L分区的编号只能从5开始。 
+
+
+
+5个分区：
+1p+1e（4个L）：P1 L5 L6 L7 L8
+
+没有特殊需求，不会选择LVM和软RIDD
+2p+1e（3个L）：P1 P2 L5 L6 L7
+
+文件系统类型介绍：
+ext2、ext3、ext4
+
+分区：先分区，首先/boot 200MB,主分区 其次：swap 700MB 主分区 3./（root） 剩余容量都给 主分区
+
+选择minimal 选择自定义now。。base system(base comPA DEBUg) Development(DEV tools)
+
+
+yum grouplist
+
+yum groupinstall "   " """"
+
+51CTO老男孩linux运维博文
+
+uname -r  ：显示内核版本
+uname -m  ：显示多少位
+uname -a  ：显示全部
+
+2.6.32-504.el5
+
+2 主版本:重大改变  6次版本号，基测 偶开 32修订次数  504 编译次数
+
+不要忘了更改设置：
+
+vi /etc/sysconfig/network -scripts/ifcfg-eth0
+ONBOOT=yes
+
+提示：vi是编辑命令，相当于记事本，输入命令后，按i编辑修改
+保存命令:wq
+
+启动或重启网卡：
+ifup eth0
+/etc/init.d/network restart 这个份更好，可以TAB补全
+==等价于service network restart
+
+
+CRT连不上LINUX：
+1.iptables防火墙
+   /etc/init.d/iptables stop
+   chkconfig iptables off  永久关掉
+2.ping linux_ip 通了 代表物理连接是好的。飞机到达。。如果不通检查防火墙
+
+3.Telnet linux_ip 22 <==connected 通了  ssh服务通不通
+
+乌班图进入命令行界面：Ctrl+alt+F 1-6  （F7是退出）  忘记密码  Alt +F2  输入：sudo passwd root 进行修改
+命令提示符，prompt，bash（shell）
+#：root   $:普通用户
+命令 选项 参数
+      短选项： --
+          多个选项可以组合：-A -B=-AB
+      长选项： --
+      参数：命令的作用对象
+切换用户：
+su 【-l】 用户名
+
+修改密码：passwd
+
+pwd：显示当前目录
+
+ls：遍历
+
+   -l：长格式 
+         -：普通文件 d：目录文件 b：块设备文件 C：字符设备文件 
+         l：符号链接文件 p：命令管道文件 s：套接字文件
+
+  文件权限：9位，每3位一组，每一组：rwx（读，写，执行），r--
+  文件硬链接的次数
+  文件的属主（owner）
+  文件的属组（group）
+  文件的大小（size），单位是字节
+  时间戳（timestamp），最近一次被修改的时间
+    访问：access
+    修改：modify，文件内容发生了改变
+    改变：change，metadata：元数据
+  -h：作单位转换
+  -a：显示以.开头的隐藏文件
+      . 当前目录
+      ..当前目录的父目录
+  -A
+  -d：显示目录自身属性
+  -i：index node，inode
+  -r：逆序显示
+  -R：递归（recursive）显示
+
+cd： 切换目录
+     家目录，主目录，home directory
+     cd ~username：进入指定用户的家目录
+     cd -：在前一次所在目录和当前目录来回切换
+命令类型：
+   内置命令（shell内置）
+   外部命令：在文件系统的某个路径下有一个与命令名称相应的可执行文件  which ls
+
+环境变量：命名的内存空间
+    变量赋值
+
+     PATH：使用冒号分隔的路径
+     o（1）
+     hash：缓存，提示系统性能
+type： 显示指定命令属于那种类型
+date：时间管理 系统时间
+clock   hwclock：硬件时间
+
+linux：rtc
+     硬件时钟
+     系统时钟
+
+获得命令的使用帮助：
+内部命令：
+    help COMMAND
+外部命令：
+    COMMAND --help
+
+命令手册：manual
+man COMMAND
+
+wathis COMMAND 显示在那个章节
+
+分章节：
+1.用户命令(/bin,/usr/bin,/usr/local/bin)
+2.系统调用
+3.库调用
+4.特殊文件（设备文件）
+5.文件格式（设备文件的语法）
+6.游戏
+7.杂项（Miscellaneous）
+8.管理命令（/sbin,/usr/sbin,/usr/local/sbin）
+
+<>必选
+[]可选
+...可以出现多次
+|：多选一
+{}：分组
+
+MAN:
+    NAME：命令名称及功能简要说明
+　　synopsis:用法说明：包括可用选项
+    DESCRIPTION：命令功能的详尽说明，可能包括每一个选项的意义
+    OPTIONS：说明每一个选项的意义
+    FIFLES：此命令相关的配置文件
+    sucs：
+    EXAMPLES：使用示例
+    SEE ALSO：另外参考
+
+翻屏：
+   向后翻一屏：SPACE
+   向前翻一屏：b
+   向后翻一行：ENTER
+   向前翻一行：k
+
+查找：
+/KEYWORD:向后
+n：下一个
+N: 前一个
+
+？KEYWORD ：向前
+n：下一个
+N: 前一个
+
+q:退出
+
+hwclock
+    -w：将系统时间写入系统
+    -s：将硬件时间写入系统
+    -r：显示时间
+
+在线文档：
+info COMMAND
+
+文档： /usr/share/doc
+
+google
+
+cal:日历
+cal 2016
+cal 12 2016
+
+文件系统：
+rootfa：根文件系统
+
+FHS：linux
+
+/boot ：系统启动相关的文件，如内核，initrd，以及grub（bootleader）
+/dev  ：设备文件：
+            块设备：随机访问，数据块
+            字符设备：线性访问，按字符为单位
+            设备号：主设备号（major） 和次目录（minor）
+/etc：配置文件
+/home:用户的家目录，每一个用户的家目录通常默认为/home/USERNAME
+/root:管理员的家目录
+/lib:库文件
+    /lib/modules:内核模块文件
+    静态库， .a  动态库， .dll  .so（shared object）
+/media:挂载点目录，移动设备
+/mnt:挂载点目录，额外的临时文件系统
+/opt:可选目录，第三方程序的安装目录
+/proc:伪文件系统，内核映射文件
+/sys:伪文件系统，跟硬件设备相关的属性映射文件
+/tmp:临时文件,/var/tmp
+/var:可变化的文件
+/bin:可执行文件，用户命令
+/sbin:管理命令
+
+/usr:shared,read-only只读文件
+     /usr/bin
+     /usr/sbin
+     /usr/lib
+
+/usr/local:     第三方软件
+    /usr/local/bin
+    /usr/local/sbin
+    /usr/local/lib
+
+文件命名规则：
+1.长度不能超过255个字符
+2.不能使用/当文件名
+
+相对路径：
+绝对路径：
+
+文件管理
+    
+目录管理
+  ls
+  cd 
+  pwd
+
+mkdir：创建空目录
+     -p：递归创建目录
+     -v：详细信息
+/root/x/y/z
+
+mkdir -pv /mnt/test/{x/m,y}==/mnt/test/x/m /mnt/test/y
+
+/mnt/test/x/m,y
+
+(a,d)_(b,c)=a_b......
+
+tree:查看目录树
+
+删除目录：rmdir
+    删除空目录
+    -p
+
+文件创建和删除：
+touch：创建文件
+     -a
+     -m
+     -t
+     -c
+
+stat：查看文件的时间戳
+
+创建文件，可以使用文件编辑器
+
+ASCII：
+
+128字符，
+       二进制：
+       2^6=0,63
+       2^7=0,127
+nano
+
+删除文件：rm
+       -i
+       -f：强制删除
+       -r：递归删除目录下的所有文件
+
+rm -rf /   :删除根目录及根目录的所有文件
+      \rm：有别名的加反斜杠才有意义
+
+复制和移动文件：
+
+cp：copy
+
+cp SRC DEST
+   -i
+   -r，R:复制文件目录
+   -f
+   -p
+   -l
+   -a:归档复制，常用于备份
+
+cp file1 file2 file3
+一个文件到一个文件
+多个文件到一个目录
+
+
+
+cp /etc/{passwd,inittab,rc.d/rc.sysinit} /tmp/
+
+mv：move
+移动文件
+
+mv SRC DEST
+mv -t DEST SRC
+
+install
+   -d DIRECOTRY...；创建目录
+   SRC DEST
+install -t DIRECTORY SRC...
+
+作业4：
+1.如何获取linux当前最新的内核版本号？
+www.kernel.org
+2.linux发行版，并说明其跟linux内核的关系
+
+发行版：Fedora，RedHat（centOS），SUSE，Debian（Ubuntu，Mint），Gentoo，LFS（linux From Scratch）
+
+每当你想吐的时候在坚持几天就可能就提升了。老是更换目标的人，终将一事无成。孤注一掷！！
+
+比你厉害的人，都还在努力，中国人太多了，什么都有人做。
+
+运行程序
+设备管理
+软件管理
+进程管理
+网络管理
+
+
+目录管理：ls，cd，mkdir，rmdir，tree
+
+文件管理：touch，stat，file，rm，cp，mv，nano，
+日期时间：data，clock，hwclock，cal
+
+查看文本：
+cat，tac，more，less，head，tail
+
+cat：链接并显示
+  -n:显示行号
+  -E：在每一行结尾显示$
+
+Ctrl+c ： 终止命令
+
+翻页：shift+pgup  down
+
+分屏显示：
+more：向后翻
+less：
+
+head：查看前n行
+tail：查看后n行
+   -n NUM  默认是10行
+
+tail -f：查看文件尾部，不退出，等待显示后续追加至此文件的新内容
+
+
+文本处理：
+cut，join，sed，awk
+
+database：数据库
+关系型数据库：
+表：二维表
+tom：123：male：2013
+
+cut：
+   -d：指定字段分隔符，默认是空格
+   -f：指定要显示的字段
+       -f1,3
+       -f1-3
+cut -d ： -f1-3 /etc/passwd
+
+
+文本排序：sort
+       -n：数值排序
+       -r：降序排序
+       -t：字段分隔符
+       -k：指定以那个字段为关键字开始排序
+       -u:排序后相同的行只显示一次
+       -f：排序时忽略字符大小写
+uniq：
+    -c：显示文件中重复的次数
+    -d：只显示重复的行
+
+sort -t： -k3 /etc/passwd
+
+文本统计：wc
+          行数，单词数，字节数
+          -l：只显示行数
+          -w：只显示单词数
+          -m：只显示字符数
+          -c：只显示字节数
+          -L：最长的一行包含多少字符
+
+字符处理命令：tr：转换或删除字符
+tr ‘ab '‘AB’< /etc/passwd输入重定向：转换
+ 
+tr -d ‘ab’：删除出现在字符集中的所有指定字符
+
+
+进程：在每个进程看来，当前主机上只存在内核和当前进程
+进程是程序的副本，进程是程序执行实例
+
+用户工作环境：
+bash：
+     # 管理员
+     $ 普通用户
+
+shell，子shell
+
+pstree
+export LANG=en
+
+bash：
+1.命令历史
+2.管道，重定向
+3.命令别名
+4.命令行编辑
+5.命令行展开
+6.文件名通配
+7.变量
+8.编程
+
+命令行编辑：
+命令光标跳转：
+        Ctrl+a：跳到命令行首
+        Ctrl+e：跳到命令行尾
+        Ctrl+u：删除光标至命令行首的内容
+        Ctrl+k：删除光标至命令行尾的内容
+        Ctrl+l：清屏
+
+命令历史：history
+       -c:清空命令历史
+       -d NUM [N]:删除指定位置的命令
+       -w:保存命令历史至历史文件中
+
+环境变量
+PATH：命令搜索路径
+HISTSIZE：命令历史缓存区大小
+
+命令历史的使用技巧：
+！n ：执行命令历史中的第n条命令
+！-n：执行命令历史中的倒数第n条命令
+！！：执行刚执行的命令（执行上一条命令）
+！string;执行命令历史中最近一次指定字符串的命令
+！$：引用前一个命令的最后一个参数
+      nano !$
+Esc .:  引用前一个命令的最后一个参数
+
+Alt + .:同上
+
+命令补全：
+Tab补全，敲一下 或两下
+PATH：
+
+路径补全：
+
+
+
+命令别名：
+
+alias cls=clear
+alias xxx=‘ccc vvv ’:有空格加引号
+
+在shell中定义的别名仅在当前shell生命周期中有效，别名的有效范围为当前shell进程
+
+撤销别名：
+unalias CMDALIAS
+/CMD
+
+命令替换
+把命令中某个子命令替换为其执行结果的过程
+echo “the current directory is $(pwd).”
+echo “the current directory is 'pwd'.”反引号
+
+bash支持的引号：
+'':命令替换
+"":弱引用，可以实现变量替换
+'':强引用，不完成变量替换
+
+文件名通配
+
+*:任意长度的任意字符
+
+？：单个任意的字符
+
+[]：匹配指定范围内的任意单个字符
+    [adc]  [a-z] [0-9]
+
+[^]:匹配指定范围外的任意单个字符
+
+    [:sapce:]:空白字符
+    [:punct:]:标点符号
+    [:lower:]:小写字母
+    [:upper:]:大写字母
+    [:alpha:]：大小写字母
+    [:digit:]：数字
+    [:alnum:]：数字和大小写字母
+
+# man 7 glob
+
+[[:alpha:]]+[[:space:]]+[[:alpha:]]
+
+
+
+
+
+

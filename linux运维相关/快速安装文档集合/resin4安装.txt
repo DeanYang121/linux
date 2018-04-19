@@ -1,0 +1,49 @@
+===========安装resin4===========
+tar xf resin-4.0.48.tar.gz
+cd resin-4.0.48 
+yum install openssl openssl-devel -y   
+ ./configure --prefix=/application/resin-4.0.48/ --with-java-home=/application/jdk/ --enable-64bit --with-apxs=/application/apache/bin/apxs --with-apache=/application/apache2.2.31                                               
+make install
+ln -s /application/resin-4.0.48/ /application/resin 
+mkdir -p /app/logs/resinlog
+/application/resin/bin/resinctl start
+netstat -lntup|grep -E "6600|6800|8080"
+=======不和apache配合生成模块，则无需编译====
+
+
+========整合apache========
+
+cd resin-4.0.48 
+./configure --with-apxs=/application/apache2.2.31/bin/apxs 
+检查是否生成相应文件：
+ls /application/apache/modules/
+          mod_caucho.so
+
+tail -9 /application/apache/conf/httpd.conf 
+
+======启动检查=====
+/application/resin/bin/resinctl start|stop|restart
+/application/apache/bin/apachectl start
+
+lsof -i :80
+netstat -lntup|grep "6911|6921|8080"
+
+打开http://192.168.110.136:8080 出现resin介绍
+打开http://192.168.110.136/caucho-status   查看是否ok？
+打开http://192.168.110.136    出现it's  work
+
+
+===================JVM参数===========================================
+
+<server id='dean' address='192.168.110.126' watchdog-port='6921'>
+        <httpd address="*" port="8080"/>
+        <jvm-arg>-Xmx256m</jvm-arg>
+        <jvm-arg>-Xsslm</jvm-arg>
+        <jvm-arg>-Xdebug</jvm-arg>
+        <jvm-arg>-Dcom.sun.management.jmxremote</jvm-arg>
+        <memory-free-min>1M</memory-free-min>
+        <thread-max>256</thread-max>
+        <socket-timeout>65s</socket-timeout>
+        <keepalive-max>128</keepalive-max>
+        <keepalive-timeout>15s</keepalive-timeout>
+</server>

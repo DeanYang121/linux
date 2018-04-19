@@ -1,0 +1,43 @@
+groupadd sftp
+#此目录及上级目录的所有者(owner)必须为root，权限不高于755，此目录的组最好设定为sftp
+mkdir /chroot/sftp
+chown -R root:sftp /chroot/sftp
+chmod -R 0755 /chroot/sftp
+
+备份sshd配置文件然后编辑：
+mv /etc/ssh/sshd_config ~/backup/sshd_config_xxx                     
+vim /etc/ssh/sshd_config
+
+注释掉/etc/ssh/sshd_config文件中的此行代码：
+Subsystem  sftp    /usr/libexec/openssh/sftp-server
+
+添加如下代码：
+Subsystem sftp internal-sftp
+Match Group sftp
+    ChrootDirectory /srv/chroot/%u
+    X11Forwarding no
+    AllowTcpForwarding no
+    ForceCommand internal-sftp
+
+功能可简述为：凡是在用户组sftp里的用户，都可以使用sftp服务 
+使用sftp服务连接上之后，可访问目录为/srv/sftp/username 
+举个例子：
+用户test是一个sftp组的用户，那么他通过sftp连接服务器上之后，只能看到/srv/sftp/test目录下的内容 
+用户test2也是一个sftp组的用户，那么他通过sftp连接服务器之后，只能看到/srv/sftp/test2目录下的内容
+
+添加有效的sftp用户，且给予用户写权限：
+#创建work的家目录：work目录的所有者必须是root，组最好设定为sftp，权限不高于755
+mkdir /chroot/sftp/work
+chmod 0755 /chroot/sftp/work
+chown root:sftp /chroot/sftp/work
+#添加用户 使用参数 -s/sbin/nologin禁止用户通过命令行登录                  
+useradd -gsftp -d /chroot/sftp/work -s /sbin/nologin work
+
+关于写权限，如下解决方案并不是很完美
+
+#在work目录下创建一个可以写的目录
+mkdir /chroot/sftp/work/write 
+chown -R work:sftp /chroot/sftp/work/write
+
+这样test用户就可以在自己家目录里的write目录下拥有写入权限了
+

@@ -1,0 +1,51 @@
+rename
+参数
+
+-n    操作预览,在不更改文件名称情况下，显示执行后的结果
+-f    强制执行
+ 
+【常用通配符说明】
+ ?    表示一个任意字符
+ *    表示一个或一串任意字符
+-------------------------------------------------
+【常用正则表达式符号说明】
+^    匹配输入的开始位置
+$    匹配输入的结尾
+.    匹配除换行符外的任意字符
++    匹配前一个字符一次或多次 例如，"zo+"可以匹配"zoo",但不匹配"z"
+[a-z]    表示某个范围内的字符，例如，"[a-z]"匹配"a"与"z"之间的任何一个小写字母字符。
+[^m-z]    否定的字符区间。与不在指定区间内的字符匹配。
+
+[root@localhost www]# rename 's/\.sh/\.php/' *        #将当前目录下.sh后缀的文件，变成.php  
+  
+[root@localhost www]# rename 's/$/\.bak/' /home/www/*.php     #给www目录下的.php加上bak后缀  
+  
+[root@localhost www]# rename 's/^/bak_/' *.bin     #给当前目录下的.bin后缀文件加上bak_前缀  
+  
+[root@localhost www]# rename 's/\.bin$//' *       #批量删除当前目录下所有文件的.bin 后缀  
+  
+[root@localhost www]# rename 's/A-Z/a-z/' *       #修改当前目录所有文件名为小写 
+
+
+# rename $1 $2 $3  
+# $1: 要被取代的关键字  
+# $2: 新的关键字  
+# $3: 档名符合这个规则的才取代  
+# 把IMG001.jpg, IMG002.jpg… 换成img001.jpg, img002.jpg…   
+ rename IMG img IMG*  
+  
+ # 把所有.htm 档案改成.html  
+ rename .htm .html *.htm  
+
+rename yangdi.HTML dean.html *.HTML
+  
+ # 把档案foo1, ..., foo9, foo10, ..., foo278.  
+ # 改成foo001, ..., foo009, foo010, ..., foo278.  
+ rename foo foo0 foo?  
+ rename foo foo0 foo??  
+
+MV命令：
+# mv $1 $2  
+# $1: 旧档案或资料夹名称  
+# $2: 新的档案或资料夹名称  
+mv oldname.txt newname.txt  

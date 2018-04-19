@@ -1,0 +1,16 @@
+面试题：onenote上mysqlDBA上
+
+数据库故障恢复案例：
+
+http://oldboy.blog.51cto.com/2561410/1431161
+http://oldboy.blog.51cto.com/2561410/1431172
+http://oldboy.blog.51cto.com/2561410/1321061
+http://www.cnblogs.com/peida/archive/2012/12/20/2825837
+把上面的案例变成自己的，不用什么都经历一遍，把别人的经验变成自己的，时间价值大。
+
+案例2：
+
+IDC机房带宽突然暴涨问题（几个故障案例） CDN，木马
+
+http://oldboy.blog.51cto.com/2561410/909696
+

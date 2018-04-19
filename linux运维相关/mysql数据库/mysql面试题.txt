@@ -1,0 +1,114 @@
+需要了解的吹牛逼的数据库软件：
+2.高性能 mysql
+a).drizzle
+b).MariaDB
+c).handlersocket,吹牛逼用，实际工作也很难用上，因为性能从来都不是问题，凡是采用各种“ 奇巧淫技”的项目，必然是天坑，人民群众喜闻乐用的产品都是老老实实采用最简单朴素技术实现
+
+1.登录数据库
+mysql -uroot -y'yy631562' -P 3306
+mysql -uroot -y'密码' -P 端口 -S socket文件路径
+
+2.查看数据库版本
+在终端：mysql -V
+mysql命令行：status
+	     select version（）
+mysql --help |grep Distrib
+
+3.创建gbk字符集的数据库deanyang，并且查看字符集
+
+create database deanyang default character set utf8 collate utf8_general_ci;
+
+show create database yang;\G
+
+4.创建用户dean，使他可以管理数据库oldboy
+
+grant all privileage on oldboy.* to dean@'host' identified by 'yy631562' 
+
+或者
+create user dean@'host' identified by ‘passwd’;
+grant all privileage on oldboy.* to dean@'host';
+
+5.查看当前数据库有哪些用户。
+
+select user from mysql.user;
+
+6.进入数据库
+
+mysql -uroot -p
+
+7.创建一张innodb引擎的表，字段为id和name，并且查看表结构及建表的sql语句
+
+create table test（
+id int(4) 
+name varchar(10)
+primary key (10)
+）engine=innodb;
+
+
+show create table test;
+
+8.插入一条数据，1，oldboy
+
+insert into test(id,name) value (1,'oldboy') 
+
+9.批量插入数据，2.老娜娜，3，一棵树
+
+insert into test（id，name） value（2，‘老娜娜’），（3，‘一棵树’）；
+
+10.查询插入记录。
+
+select * from test where id>1;
+
+11.把字段name前插入age字段，类型int（4）
+
+alter table `test` add age int(4) after id;
+
+alter table [表名] add [字段名] 字段属性 default 缺省值 default 是可选参数
+
+12.备份oldboy库
+
+mysqldump -uroot -y'passwd' -B oldboy --events -x|gzip >bak_$(date +%F).sql
+
+13.删除表中所有的数据，并且查看。
+delete from test；
+select * from test；
+
+14.删除表test和oldboy的数据库并查看
+delete from test；
+drop database oldboy；
+select * from test；
+use database；
+show tables；
+
+14.恢复以上删除的数据
+
+mysql -uroot -y'passwd' < test_bak.sql
+
+mysql -uroot -y'passwd' < oldboy_bak.sql
+
+15.mysql的密码丢失了如何找回
+
+首先停止数据库：
+
+方法1：登录mysql时使用--skip-grant-tables启动mysql
+
+mysql_safe --default-file=/data/3306/my.cnf --skip-grant-tables &
+
+mysql -uroot -P3306 -S /data/3306/mysql.sock 登录时不需要密码
+
+方法二：在my.cnf中添加参数
+
+在[mysqld]的段中加上一句：skip-grant-tables 
+例如： 
+[mysqld] 
+datadir=/var/lib/mysql 
+socket=/var/lib/mysql/mysql.sock 
+skip-grant-tables
+
+无密码登录mysql更新密码：
+
+update mysql.user set password=password（'123456'） where user=root；
+
+  
+
+

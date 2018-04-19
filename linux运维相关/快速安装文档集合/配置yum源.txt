@@ -1,0 +1,15 @@
+===========配置阿里yum源========
+cd /etc/yum.repos.d/
+wget http://mirrors.aliyun.com/repo/Centos-6.repo
+mv CentOS-Base.repo CentOS-Base.repo.bak 
+mv Centos-6.repo CentOS-Base.repo
+
+执行yum源更新命令 
+yum clean all 
+yum makecache 
+yum update
+
+配置CentOS6的epel源：32位
+ wget  http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm          //下载centos6 32位的EPEL源
+ rpm -ivh epel-release-6-8.noarch.rpm          //安装EPEL源
+ yum makecache          //更新本地缓存

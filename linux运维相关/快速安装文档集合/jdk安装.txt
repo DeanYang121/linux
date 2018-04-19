@@ -1,0 +1,15 @@
+===============°²×°jdk============
+
+tar xf jdk-8u111-linux-i586.tar.gz
+mkdir -p /application/jdk
+mv jdk1.8.0_111/* /application/jdk/
+vim /etc/profile
+
+#java env start config by dean 2016-11-19
+export JAVA_HOME=/application/jdk
+export CLASSPATH=$CLASSPATH:$JAVA_HOME/lib:$JAVA_HOME/jre/lib
+export PATH=$JAVA_HOME/bin:$JAVA_HOME/jre/lib:$PATH:$JAVA_HOME/bin
+export RESIN_HOME=/application/resin
+#java env end config by dean 2016-11-19
+
+javac -version

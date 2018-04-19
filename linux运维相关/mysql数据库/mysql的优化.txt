@@ -1,0 +1,431 @@
+创建表的时候创建索引：
+普通索引：允许定义索引的列中插入重复值和空值
+唯一索引：索引列的值必须唯一，允许有空值
+主键索引：是特殊的唯一索引，不允许有空值
+
+索引设计原则：在不同值多的列，在查询频繁的列
+
+================在创建表时：===============
+创建普通索引：
+create table bool
+{
+book id int NOT NULL,
+name Varchar(233) NOT NULL,
+INDEX IDXNAME(name)
+};
+
+show create table book \G
+
+explain select * from book where name=dean \G  #查看是否使用索引
+
+创建唯一索引：
+UNIQUE INDEX uniqIdx（id）
+
+创建单列索引：
+INDEX singleIndex（name（20））
+
+创建组合索引：
+INDEX MultiIdx(id,name,age(100))
+
+创建全文索引：
+FULLTEXT INDEX fulltxtIdx(info)		只能是MyISAM引擎，并且只能在CHAR，VARCHAR和TEXT列创建索引
+
+创建空间索引：
+
+==============alter已经创建的表上创建索引======================
+alter table创建：
+
+添加索引之前，使用show index 语句查看指定表中创建的索引：
+show index from book \G
+
+创建普通索引：
+alter table book add index bknameidx( bookname(30) );
+
+创建唯一索引：
+alter table book add unique index uniqidx( bookId );
+
+创建单列索引：
+alter table book add index bkcmtidx( comment(50) );
+
+创建组合索引：
+alter table book add index multiIdx( authors(30),info(50) )
+
+创建全文索引：
+alter table book add fulltext index infoFtidx( info );
+
+============create在已经存在的表上创建索引===============
+create unique index uniqidx on book( bookid );
+
+create index bkcmdIdx on book( comment(50) );
+
+create index bcauandinfo on book ( authors(20),info(50) );
+
+=========删除表============、
+drop table t6;
+create table t6;
+
+然后建立全文索引 和 空间索引
+===========删除索引============================
+alter table table_name DROP INDEX index_name;
+alter table book drop index uniqididx;
+
+drop index index_name on table_name;
+
+===============mysql日志========================================
+
+日志分类:
+
+错误日志：记录mysql服务启动，运行或停止mysql服务时出现的问题
+查询日志：记录建立的客户端连接和执行的语句
+二进制日志：记录所有更改数据的语句，可以用于数据复制
+慢查询日志：记录所有执行时间超过long_qury_time的所有查询或不使用索引的日志
+
+执行flush logs 或者 mysqladmin flush-logs 或mysqladmin refresh  刷新日志
+
+启动日志功能会影响数据库性能。
+
+==================二进制：
+
+	my.ini中[mysqld]组下几个设置：
+log-bin [=path/ [filename] ]
+expire_logs_days =10
+max_binloging_size = 100M
+
+如：
+log-bin = "d:/mysql/log/binlog"   生成binlog.000001  binlog.index
+
+通过show variables like 'log_%';
+
+通过show binary logs; 查看二进制日志文件个数及文件名
+
+mysqlbinlog d:/mysql/log/binlog.000001查看二进制文件中的sql语句   记录用户对数据库的操作
+
+====删除二进制日志====
+reset master;  删除所有的二进制文件
+
+purge {master | binary } logs to 'log_name'  删除这个log_name之前的所有日志
+
+purge {master | binary } logs before 'date（20160130）'
+
+====使用二进制恢复数据库===
+mysqlbinlog [option] filename | mysql -uuser -ppass
+
+option: --start-date  --stop-date(指定恢复数据库的起始时间和结束时间点)  --start-position -stop-position（指定恢复数据的开始位置和结束位置）
+
+mysqlbinlog --stop-date="2016-1-30	15:27:48" d:/mysql/log/binlog/binlog.000001 |mysql -uuser -ppass
+恢复数据库到该时间，这种方法对于意外操作非常有效，比如操作不当误删了数据
+
+====暂时停止使用二进制日志功能===
+set sql_log_bin = {0|1}
+
+暂停记录：set sql_log_bin = 0;
+恢复记录：set sql_log_bin = 1;
+
+ 
+==========错误日志
+
+配置启动错误日志：
+[mysqld]
+log-error = [path / [file-name]]
+
+show variables like 'log_error'; 查看错误日志的路径，使用vi 查看  错误行在哪儿
+
+在运行状态下删除错误日志文件后，mysql不会自动创建日志，flush logs在重新加载日志时，不存在会自动创建。
+所以在删除错误日志之后，如果需要重建日志，需要在服务端执行以下命令：
+mysqladmin -uroot -p flush-logs
+或直接登录flush logs；
+
+========通用查询日志
+
+[mysqld]
+log = [=path / [filename] ]
+
+删除错误日志：
+[mysqld]
+log
+
+查看查询日志的存储位置
+
+删除以后重新建立日志文件：
+MysqlSQLadmin flush logs
+
+mysqladmin -u root -p flush-logs
+
+========慢查询日志
+
+[mysqld]
+log-slow-queries [=path / [filename] ]	
+long_query_time = n	#参数n是时间值，单位是秒,默认是10秒
+
+查看慢查询日志：
+打开慢查询日志，filename-slow.log
+慢查询分析工具：mysql Dump slow ,mysql sla ,
+
+====删除慢查询日志文件=====
+删除之后需要重建文件：
+flush logs
+
+
+=======平时打开那些日志=====
+如果不必要，应尽可能少的开启日志。
+在开发环境中优化查询效率低的语句，可开启慢查询日志，如果需要记录用户所有记录，开启通用查询日志
+如果需要记录数据变更，开启二进制日志
+错误日志默认开启、
+
+=============mysql性能优化======================
+
+查看mysql数据库性能参数：
+show status like 'value';
+常用的性能参数：
+Connections: 连接mysql服务器的次数
+Uptime：Mysql服务器的上线时间
+Slow_quries：慢查询的次数
+Com_select：查询操作的次数
+Com_update:更新操作的次数
+Com_insert:插入操作的次数
+Com_delete:删除操作的次数
+
+show status like 'Connections'
+show status like 'slow_quries'
+
+优化查询：
+分析查询语句： explain [extended] select select_options
+
+explain select * from fruits;
+
+使用索引：
+如果查询的值开头是%将不会走索引
+使用多列索引，注意只会走，最左边开始
+使用OR关键字查询语句：只有OR两边的条件都是索引时，才会走索引
+
+=====优化数据库结构======
+将字段很多的表分解成多个表
+查看表结构：desc members;
+
+===增加中间表===
+对于需要经常联合查询的表，可以建立中间表提高查询效率。直接通过查询中间表，来代替以前的联合查询
+
+===增加冗余字段===
+合理的加入冗余字段可以提高查询速度
+
+====优化插入记录的速度
+
+影响插入速度的主要是索引，唯一性校验，一次插入记录条数等
+MyISAM引擎的表：
+1.禁用索引：Alter table_name DISABLE KEYS;
+重新开启 alter table table_name ENABLE KEYS；
+
+2.禁用唯一性检查：
+关闭：set unique_check=0
+开启：set unique_check=1
+
+3.使用批量插入
+insert into fruits values(),(),();
+
+4使用load DATA INFILE 批量导入：
+当需要批量导入时，如果能用尽量这个就用
+
+InnoDB引擎：
+1.禁用唯一性检查：
+关闭：set unique_check =0
+开启：set unique_check =1
+
+2.禁用外键检查：
+禁用:set foreign_key_checks=0
+开启:set foreign_key_checks=1
+
+3.禁止自动提交：
+禁用：set autocommit=0
+开启：set autocommit=1
+
+
+=============分析表，检查表，优化表
+
+分析表：
+Analyze [local | no_write_to_binlog] table tb1_name[,tb1_name]...
+检查表：
+check table tb1_name [,tb1_name] ... [option] ...
+option={QUICK|FAST|MEDIUM|EXTEDED|CHANGE}
+优化表：
+会在执行期间，自动对表加锁
+OPTIMIZE [LOCAL |NO_WRITE_TO_BINLOG] TABLE　tb1_name [,tb1_name]...
+每周一次或者没月一次。（消除删除和更新造成的文件碎片）
+
+===优化mysql服务器
+1.配置足够大的内存
+2.配置高速磁盘系统
+3.合理分布磁盘IO，把磁盘IO分散在多个设备上，以减少资源竞争
+4.配置多处理器，mysql多线程的数据库。
+
+
+=====优化mysql的参数
+
+my.cnf  或者my.ini的[mysqld]下：
+key_buffer_size:这个值的大小取决于内存大小，不是越大越好
+table_cache:表示同时打开的表的个数，这个值不是越大越好，同时打开太多表，会影响系统的性能
+query_cache_size:查询缓冲区大小，需要和query_cache_type配合使用
+sort_buffer_size:表示排序缓冲区的大小，这个值越大，进行排序的速度越快
+read_buffer_size:线程从表中连续读取记录时需要用到这个缓冲区。SET SESSION read_buffer_size=n 可以临时设置该参数的值
+read_rnd_buffer_size:每个线程保留的缓冲区大小
+innodb_buffer_pool:表示INNODB类型的表和索引的最大缓存，这个值越大，查询速度越快，但是这个值太大会影响系统性能
+max_connections: 表示数据库的最大连接数。过多会导致mysql服务器僵死
+innodb_flush_log_at_trx_commit:表示何时将缓冲区的数据写入日志文件，并且将日志文件写入磁盘中。
+back_log:
+interactive_timeout：
+sort_buffer_size：
+thread_cache_size：
+wait_timeout：表示服务器在关闭一个连接时等待行动的秒数，默认数值是28800
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+==================其他知识===============================
+liunx历史记录安全技巧：
+强制linux不记录敏感历史命令
+#HISTCONTROL=ignorespace
+
+update命令 不加条件不能执行
+
+抓取慢查询sql语句。
+
+使用explain查询select的执行情况：判断一个语句有没有走索引
+explain select * from test where name="oldboy"\G; \G方便观察
+help explain；
+
+

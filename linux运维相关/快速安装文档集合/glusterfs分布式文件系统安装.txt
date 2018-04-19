@@ -1,0 +1,332 @@
+关闭iptables和selinux
+
+安装glusterfs软件包：
+yum install centos-release-gluster37.noarch -y
+
+yum --enablerepo=centos-gluster*-test install glusterfs-server glusterfs-cli glusterfs-geo-replication -y
+
+
+修改hostname，/etc/sysconfig/network   /etc/hosts   使他们的hostname一致
+配置hosts文件：
+127.0.0.1   localhost mystore1 localhost4 localhost4.localdomain4
+::1         localhost mystore1 localhost6 localhost6.localdomain6
+
+192.168.196.135 mystore1
+192.168.196.144 mystore2
+192.168.196.146 mystore3
+192.168.196.145 mystore4
+
+
+安装epel源：
+glusterfs yum源有部分依赖epel源
+
+yum install -y epel-release
+
+安装glusterfs源：
+wget -p /etc/yum.repos.d/ http://download.gluster.org/pub/gluster/glusterfs/3.7/LATEST/RHEL/glusterfs-epel.repo
+
+安装的包有：
+  glusterfs-api-devel.x86_64 0:3.7.20-1.el7
+  glusterfs-coreutils.x86_64 0:0.2.0-1.el7_37     
+  glusterfs-devel.x86_64 0:3.7.20-1.el7    
+  glusterfs-extra-xlators.x86_64 0:3.7.20-1.el7       
+  glusterfs-ganesha.x86_64 0:3.7.20-1.el7         
+  glusterfs-rdma.x86_64 0:3.7.20-1.el7     
+  glusterfs-resource-agents.noarch 0:3.7.20-1.el7 
+  glusterfs-server-3.7.20-1.el7.x86_64 
+  glusterfs-cli-3.7.20-1.el7.x86_64 
+  glusterfs-geo-replication-3.7.20-1.el7.x86_64 
+
+
+yum install centos-release-gluster37.noarch -y
+
+yum --enablerepo=centos-gluster*-test install glusterfs-server glusterfs-cli glusterfs-geo-replication -y
+yum安装的包不全，少包，功能不全。
+
+下载地址软件包的地址：
+官网
+
+查看版本信息：
+glusterfs -V
+
+启动服务：
+service glusterd start
+service glusterd stop
+
+添加开机自启动：
+systemctl enable jenkins.service #设置jenkins服务为自启动服务
+sysstemctl start  jenkins.service #启动jenkins服务
+systemctl disable xx.service
+查看开机是否自启动：
+systemctl is-enabled glusterd.service
+
+查看开机自启动的程序，相当于chkconfig --list：
+ls /etc/systemd/system/multi-user.target.wants/
+
+在manager机器上添加信任池：
+gluster peer probe mystore2
+gluster peer probe mystore3
+gluster peer probe mystore4
+
+从存储池中移除指定服务器：
+# gluster peer detach server2
+
+查看信任池状态：
+gluster peer status
+
+========================================
+出现的错误：
+[root@mystore1 ~]# gluster peer probe mystore3
+peer probe: failed: Peer uuid (host mystore3) is same as local uuid
+
+解决办法：
+gluster system:: uuid reset
+硬盘不能格式化为xfs格式：
+解决办法，直接克隆一个快照，可以进行xfs格式化的快照
+
+=========================================================
+
+配置前的装备工作：
+
+下载xfs支持包：每个机器上执行
+yum install -y xfsprogs
+
+添加两个新的磁盘，每个机器上都添加同样大小的磁盘。
+fdisk -l
+/dev/sdb
+/dev/sdc
+会出现两个新添加的磁盘
+
+fdisk /dev/sdb
+
+n
+p
+1
+回车
+w
+
+mkfs.xfs -f /dev/sdb1
+meta-data=/dev/sdb1              isize=256    agcount=4, agsize=131008 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=0        finobt=0
+data     =                       bsize=4096   blocks=524032, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=0
+log      =internal log           bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+
+或者mkfs -t xfs /dev/sdb1
+
+mkdir -p /storage/brick1 /storage/brick2
+挂载：
+mount /dev/sdb1 /storage/brick1
+mount /dev/sdc1 /storage/brick2
+
+加入/etc/fstab:
+/dev/sdb1 /storage/brick1 xfs defaults 0 0
+/dev/sdc1 /storage/brick2 xfs defaults 0 0 
+
+2.6创建volume及其他操作：
+[root@mystore1 ~]# gluster volume create gv1 192.168.196.147:/storage/brick1 192.168.196.146:/storage/brick1 force
+volume create: gv1: success: please start the volume to access data
+
+问题不能解析hostname：
+
+
+gluster日志文件路径：
+/var/log/glusterfs/etc-glusterfs-glusterd.vol.log
+
+=============================================================
+gluster volume create gv1 mystore1:/storage/brick1 mystore2:/storage/brick1 force
+配置解析主机名，失败导致不能创建卷组。
+
+确保：/etc/hosts   和 /etc/sysconfig/network配置格式正确
+===================================================================
+有哪几种分布卷，区别是什么？
+=======创建分布卷======
+gluster volume create gv2 mystore1:/storage/brick2 mystore2:/storage/brick2 force
+volume create: gv1: success: please start the volume to access data
+
+启动卷：
+gluster volume start gv2
+volume start: gv2: success
+
+挂载卷到目录：
+mount -t glusterfs 127.0.0.1:/gv2 /mnt
+查看：
+df -h 
+原本一个盘只有2G，现在组合成卷组以后，变成了4G。
+
+127.0.0.1:/gv2  4.0G   65M  4.0G   2% /mnt
+
+测试：cd /mnt
+touch a.txt b  c.img
+ls
+
+
+用NFS方式挂载：
+mount -o mountproto=tcp -t nfs mystore3:/gv2 /mnt/
+df -h
+
+===========创建复制卷============
+[root@mystore1 mnt]# gluster volume create gv1 replica 2 mystore1:/storage/brick1 mystore2:/storage/brick1 force
+volume create: gv1: success: please start the volume to access data
+
+ gluster volume start gv1
+
+mount -t glusterfs 127.0.0.1:/gv1 /opt
+df -h
+
+127.0.0.1:/gv2  4.0G   65M  4.0G   2% /mnt
+127.0.0.1:/gv1  2.0G   33M  2.0G   2% /opt
+
+
+===创建分布式条带卷============
+gluster volume create gv3 stripe 2 mystore3:/storage/brick1 mystore4:/storage/brick1 force
+
+mkdir -p /gv1 /gv2 /gv3
+
+mount -t glusterfs 127.0.0.1:gv1 /gv1
+mount -t glusterfs 127.0.0.1:gv2 /gv2
+mount -t glusterfs 127.0.0.1:gv3 /gv3
+
+df -h
+
+127.0.0.1:gv1   2.0G   33M  2.0G   2% /gv1
+127.0.0.1:gv2   4.0G   65M  4.0G   2% /gv2
+127.0.0.1:gv3   4.0G   65M  4.0G   2% /gv3
+
+
+====测试=====
+[root@mystore1 gv3]# dd if=/dev/zero bs=1024 count=10000 of=/gv3/10M.file
+总结一波：
+如果是分布式条带卷：每个块下面会有该文件的一版
+分布式复制卷：每个块下面都有一份数据，也就是会有备份的数据
+分布式卷：只有一个数据在一个块文件下面，没有备份，磁盘是最大容量
+
+
+如果以后要添加服务器，扩容卷可以使用add-brick命令：
+
+gluster volume stop gv1
+
+umount gv1 的挂载
+
+先停止再添加卷，扩容比较好
+
+[root@mystore1 /]# gluster volume add-brick gv1 replica 2 mystore3:/storage/brick2 mystore4:/storage/brick2 force
+volume add-brick: success
+
+gluster info volume gv1
+
+mount -t glusterfs 127.0.0.1:gv1 /gv1
+注意：当你给分布式复制卷和分布式条带卷中增加bricks时，你增加的bricks的数目必须是复制或者条带数的倍数
+例如：你给一个分布式复制卷的replica为2，你在增加bricks的时候数量必须为2，4,6,8等
+扩容后进行测试，发现文件都分布在扩容前的卷中
+====================
+
+磁盘存储平衡
+注意，磁盘平衡布局很有必要，因为布局结构是静态的，当新的bricks加入现有卷，新创建的文件会分布
+到旧的bricks中，所以需要平衡布局结构，使新加入的bricks生效，布局平衡只是使新布局生效
+并不会在新的布局移动老的数据，如果你想在新布局生效以后，重新平衡卷中的数据，还需对卷中
+的数据进行平衡
+
+
+执行命令：
+gluster volume rebalance gv1 start
+
+查看状态：
+gluster volume rebalance gv1 status
+
+
+移除brick：当硬件损坏或者网络故障时，可能需要移除相关的bricks。
+注意当你移除bricks的时候，你在gluster的挂载点将不能继续访问数据，
+只有配置文件中的信息移除后你才能继续访问bricks的数据。当移除分布式复制卷
+或者分布式条带卷的时候，移除的bricks数目必须是replica或者stripe的倍数。
+例如，一个分布式条带卷的strip是2.当你移除bricks的时候必须是2,，4,6等
+
+先停止卷再进行移除：
+gluster volume stop gv2
+gluster volume remove-brick gv1 replica 2 mystore3:/storage/brick2 mystore4:/storage/brick2 force
+
+
+=====删除卷=======
+umount /gv1
+gluster volume stop gv1
+gluster volume delete gv1
+
+gluster volume info gv1
+
+测试删除卷之后，重新添加之后，继续使用之前的数据，是可以的。
+
+3.构建企业级分布式存储
+1硬件要求：
+选择2U的机型，磁盘SATA盘4T，如果I/O要求高，可以采用SSD固态硬盘。
+为了系统保证稳定性和性能，要求所有的glusterfs服务器硬件配置尽量一致
+尤其是硬盘数量和大小。机器的RAID卡需要带电池，缓存越大，性能越好
+建议做RAID10，如果考虑空间要求，需要做RAID5，建议最好有1-2块硬盘的热备盘。
+
+2系统要求和分区划分：
+使用CentOS6或7：
+安装完成后，升级到最新版本，不要使用LV，建议/boot 分区200M,/分区100G
+swap分区和内存分区一样大小，剩余空间给gluster使用，划分单独的硬盘空间
+系统安装软件没有特殊要求，建议除了开发工具和基本管理软件，其他软件一律不安装。
+
+
+3网络环境
+网络要求全部千兆环境，gluster服务器至少有两块网卡，1块网卡绑定供gluster使用
+剩余一块分配管理网络IP，用于系统管理，如果有条件建议购买万兆交换机，服务器配置
+万兆网卡，存储性能会更好，网络方面如果要求高，可以多网卡绑定。
+服务器主备机器要放在不同的机柜，连接不同的交换机，即使一个机柜出现问题，，还有一份数据可以访问
+
+4构建高性能，高可用存储
+一般在企业中，采用的是分布式复制卷，因为数据有备份，数据相对安全，分布式条带卷目前对glusterfs来说没有完全成熟，存在一定的数据安全风险
+
+5.开启防火墙端口
+一般企业应用中linux防火墙是打开的，这些开通服务器之间访问的端口
+iptables -I INPUT -p tcp --dport 24007:24011 -j ACCEPT 卷的端口
+iptables -I INPUT -p tcp --dport 49152:19162 -j ACCEPT 磁盘端口
+
+6.glusterfs文件系统优化
+
+详见有道云笔记
+
+7.监控及日常维护
+使用zabbix自带模板即可，CPU，内存，主机存活，磁盘空间，主机运行时间
+系统load，日常情况要查看服务器监控值，遇到报警要及时处理
+gluster volume status gv2	(看看这个节点有么有在线)
+gluster volume head gv2 full  （启动完全修复）
+gluster volume heal gv2 info  (查看需要修复的文件)
+gluster volume heal gv2 info healed (查看修复成功的文件)
+gluster volume info split-brain (查看脑裂的文件)
+gluster volume quota gv2 enable 激活quota功能
+gluster volume quota gv2 disable  关闭quota功能
+gluster volume quota gv2 limit-usage /data 10GB --/gv2/data 目录限制
+gluster volume quoto gv2 list    --quota信息列表
+gluster volume quota gv2 list /data  -- 限制目录的quota信息
+gluster volume set gv2 features.quata-timeout 5 -- 设置信息的超时时间
+gluster colume quota gv2 remove /data --删除某个目录的quota设置
+
+备注：quota功能，主要对挂载点下的某个目录进行空间限额。如：
+/mnt/glusterfs/data 目录，而不是对组成卷组的空间进行限制
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

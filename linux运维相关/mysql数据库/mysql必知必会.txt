@@ -1,0 +1,127 @@
+select * from table;
+
+select a,b from table;
+
+select distinct Vend_id from table;
+
+限制取多少行：
+
+select prod_name from product limit 5; 返回不多于5行
+
+select pro_name from product limit 5,5;从第5行开始的5行
+
+select products.prod_name from crashcourse.products; 什么意思？
+
+排序：
+
+select prod_name from products order by prod_name DESC; 
+
+select prod_id,prod_price,prod_name from products order by prod_price DESC,prod_name;只对price降序
+
+升序默认。ASC
+
+select prod_price from product order by prod_price DESC limit 1;
+
+过滤数据：
+
+select prod_name,prod_price from product where prod_name = ‘fues’;默认不区分大小写
+
+select prod_name,prod_price from product where prod_price < 10；（ >  <> != ）
+
+select prod_name,prod_price from products where prod_price between 5 and 10;范围值
+
+select prod_name from prod_price IS NULL; 检查空值
+
+高级数据过滤：
+
+select prod_id,prod_price,prod_name from product where vend_id = 1003 AND prod_price <= 10;
+
+select prod_name,prod_price from products where vend_id = 1002 or vend_id = 1003;
+
+组合：select prod_name,prod_price from products where (vend_id = 1002 or vend_id = 1003) AND prod_price >= 10;
+
+select prod_name,prod_price from products where vend_id IN (1002,1005) order by prod_id;
+
+NOT否定的功能：select prod_name,prod_id from products where vend_id NOT IN (1002,1003) order by prod_name;匹配除了1002,1003的部分
+
+
+用通配符过滤：
+
+select prod_id,prod_name from products where prod_name like 'jet%';搜索是区分大小写的  '%anvil%'  's%e's开头e结尾的
+
+正则匹配：
+
+
+拼接：
+
+select Contact(vend_name,'(',vend_country,')') from vendors order by vend_name;
+
+
+去除空格：select Contact(RTrim(vend_name),'(',RTrim(vend_country),')') from vendors order by vend_name;
+LTrim（）,Trim()
+
+别名：select Contact(RTrim(vend_name),'(',RTrim(vend_country),')') AS vend_title from vendors order by vend_name;
+
+执行算术计算(+ - * /)：
+select prod_id,quantity,item_price,quantity*item_price AS expanded_price from orderitems where order_num=20005;
+
+联结查询：
+select vend_name,prod_name,prod_price from vendors,products where venders.vend_id = products.vend_id order by vend_name,prod_name;
+
+内部连接：
+select vend_name,prod_name,prod_price from vendor INNER JOIN products ON vendors.vend_id = products.vend_id;
+
+这个和前面的where连接效果是一样的。
+
+还可以连接多个表。使用AND
+
+
+select cust_name,cust_contanct from customers,orders,orderitems where customers.cust_id = orders.cust_id AND .....；
+
+自联结实现一张表的多次查询：
+select p1.prod_id,p1.prod_name from products AS p1,products AS p2 where p1.vend_id=p2.vend_id AND p2.prod_id=‘DTNTR’;
+
+
+插入数据：
+insert into customers(cust_name,cust_contact) value('Pep E','NULL')
+
+更新数据：
+update customers set cust = 'elmer' where cust_id = 10005;
+
+
+创建表：
+
+create table customers 
+(
+cust_id int NOT NULL AUTO_INCREMENT,
+
+)ENGINE=InnoDB
+
+
+删除表：
+
+DROP TABLE customer2;
+
+ALTER TABLE Vendors
+ADD Vend_phone CHAR(20);
+
+ALTER TABLE Vendors
+DROP COLUMN vend_phone;
+
+定义外键：
+ALTER TABLE orderitems
+ADD CONSTRAINT fk_orderitems_orders
+FOREIGN KEY (order_num) REFERENCES orders (order_num);
+
+
+ 
+
+
+
+
+
+
+
+
+
+

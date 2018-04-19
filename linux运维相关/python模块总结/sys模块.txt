@@ -1,0 +1,71 @@
+enumerate还可以接收第二个参数，用于指定索引起始值，如：
+list1 = ["这", "是", "一个", "测试"]
+for index, item in enumerate(list1, 1):
+    print index, item
+>>>
+1 这
+2 是
+3 一个
+4 测试、
+
+首先，打开终端模拟器进入Python解释器或者打开IDE编辑器创建一个新的.py后缀名的Python程序文件。
+下面，以解释器中的操作举例：
+>>> import sys #导入sys模块
+>>> dir(sys)     #dir()方法查看模块中可用的方法
+二、sys模块重要函数变量
+1 )、sys.stdin 标准输入流。
+2）、sys.stdout 标准输出流。
+3 )、sys.stderr 标准错误流。
+4 )、sys.path 查找模块所在目录的目录名列表。
+5 )、sys.argv 命令行的参数，包括脚本名称。sys.arg[0]:当前脚本名称
+6 )、sys.platform 返回当前系统平台，如：win32、Linux等。
+sys.exc_info()：获取当前正在处理的异常类，exc_type、exc_value、exc_traceback是当前处理的异常详细信息
+sys.exit（）方法可以退出当前的程序，可以提供一个整数类型，通常我们用0表示功能，做为这个方法的参数，
+当然也可以用字符串参数，表示错误不成功的报错信息
+内建模块：if module in sys.builtin_module_names:
+非内建模块：module = __import__(module)
+
+2.和操作系统相关的调用 
+  系统相关的信息模块 import sys 
+    sys.argv是一个list,包含所有的命令行参数. 
+    sys.stdout sys.stdin sys.stderr 分别表示标准输入输出,错误输出的文件对象. 
+    sys.stdin.readline() 从标准输入读一行 sys.stdout.write("a") 屏幕输出a 
+    sys.exit(exit_code) 退出程序 
+    sys.modules 是一个dictionary，表示系统中所有可用的module 
+    sys.platform 得到运行的操作系统环境 
+    sys.path 是一个list,指明所有查找module，package的路径. 
+
+Python进行文件读写的函数为open或file:
+file_handler = open(filename,,mode）
+
+w以写方式打开文件，可向文件写入信息。如文件存在，则清空该文件，再写入新内容
+a以追加模式打开文件（即一打开文件，文件指针自动移到文件末尾），如果文件不存在则创建
+r+以读写方式打开文件，可对文件进行读和写操作。
+w+消除文件内容，然后以读写方式打开文件。
+a+以读写方式打开文件，并把文件指针移到文件尾。
+b以二进制模式打开文件，而不是以文本模式。该模式只对Windows或Dos有效，类Unix的文件是用二进制模式进行操作的。
+
+ 操作文件对象方法
+f.close()
+关闭文件，记住用open()打开文件后一定要记得关闭它，否则会占用系统的可打开文件句柄数。
+f.fileno()
+获得文件描述符，是一个数字
+f.flush()
+刷新输出缓存
+f.isatty()
+如果文件是一个交互终端，则返回True，否则返回False。
+f.read([count])
+读出文件，如果有count，则读出count个字节。
+f.readline()
+读出一行信息。
+f.readlines()
+读出所有行，也就是读出整个文件的信息。f.seek(offset[,where])
+把文件指针移动到相对于where的offset位置。where为0表示文件开始处，这是默认值 ；1表示当前位置；2表示文件结尾。
+f.tell()
+获得文件指针位置。
+f.truncate([size])
+截取文件，使文件的大小为size。
+f.write(string)
+把string字符串写入文件。
+f.writelines(list)
+把list中的字符串一行一行地写入文件，是连续写入文件，没有换行。

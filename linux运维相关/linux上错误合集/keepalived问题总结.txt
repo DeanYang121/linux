@@ -1,0 +1,20 @@
+
+
+
+===============无法绑定虚拟ip======
+问题描述：
+使用/etc/init.d/keepalived start  启动服务
+检查   ps -ef|grep keep
+检查   ip add |grep 192.168   没有显示需要绑定的虚拟ip
+
+解决办法1：指定绝对路径的配置文件启动
+
+/usr/sbin/keepalived -f /etc/keepalived/keepalived.conf
+
+编辑启动脚本：
+vim /etc/init.d/keepalived
+
+daemon $exec $KEEPALIVED_OPTIONS    =======>  daemon $exec -f $config
+
+解决办法2：
+后面经过测试，发现就以原来的方式进行启动，等待一段时间会出现vip

@@ -1,0 +1,101 @@
+iptables -F   清空当前所有链的规则
+iptables -Z   清除当前所有链的记数器
+iptables -X   删除用户自定义的链
+允许ssh登录：
+
+iptables -A INPUT -p tcp -s 10.0.0.0/24 -j ACCEPT
+iptables -A INPUT -p tcp --dport 52113 -j ACCEPT
+设置本机lo通信规则：
+
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+设置默认防火墙禁止和允许规则：
+
+设置默认DROP掉FORWARD，INPUT，OUTPUT链
+iptables -P OUTPUT ACCEPT
+iptables --policy FORWARD DROP
+iptables --policy INPUT DROP
+********************************************
+iptables -F   清空当前所有链的规则
+iptables -Z   清除当前所有链的记数器
+iptables -X   删除用户自定义的链
+
+iptables -A INPUT -p tcp --dport 52113 -s 10.0.0.0/24 -j ACCEPT
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+开启信任的IP地址：
+iptables -A INPUT -s 124.43.62.96/27 -p all -j ACCEPT 办公室固定IP段
+iptables -A INPUT -s 192.168.1.0/24 -p all -j ACCEPT IDC机房的内网网段
+iptables -A INPUT -s 10.0.0.0/24 -p all -j ACCEPT  其他机房的内网网段
+......等等
+
+允许业务端口对外访问：（允许http服务无条件通过）
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+
+允许icmp协议通过：
+iptables -A INPUT -p icmp --icmp-type any -j ACCEPT
+
+对内开。对外不开
+iptables -A INPUT -p icmp -s 10.0.0.0/24 -m icmp --icmp-type any -j ACCEPT
+
+允许关联的协议包通过（web服务不要使用FTP）
+允许关联的状态包：
+iptables -A INPUT -m --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+通过其他服务器扫描我们配置的防火墙：
+namp 10.0.0.19 -p 1-65535 时间很长
+
+
+保存规则：
+/etc/init.d/iptables save
+
+cp /etc/init.d/iptables /etc/sysconfig/iptables.ori
+
+/etc/init.d/iptables start
+
+百度：iptables 面试题 企业iptables面试题：
+
+iptables -N syn-flood
+iptables -A INPUT -i eth0 -syn -j syn-flood
+iptables -A syn-flood -m limit -limit 5000/s -limit-burst 200 -j RETURN
+iptables -A syn-flood -j DROP
+
+
+1.自定义一个链
+2.从eth0进来的，网络状态只发syn的就是syn攻击，对他进行syn-flood处理
+3.添加规则：限制每秒5000个，并发200
+
+
+生产维护iptables：
+vim /etc/sysconfig/iptables
+
+例如：-A INPUT -p tcp -m tcp --dport 873 -j ACCEPT 
+/etc/init.d/iptables reload
+
+自动封ip地址：
+分析web或应用日志或者网络连接状态封掉垃圾IP
+iptables -I INPUT -p tcp -s 10.0.0.106 --dport 80 -j DROP
+
+问题1.企业防火墙和iptables防火墙是否要同时用？
+
+可以用，企业防火墙放在网关位置，相当于大厦保安。
+但是每间屋子还得有门关着房间。
+
+实战：
+服务器网关需要具备如下条件：
+1.物理条件是具备双网卡，建议eth0外网地址，eth1内网地址，内网卡不配GW
+
+2.确保服务器网关B 可以上网
+
+3.内核文件/etc/sysctl.conf里开启转发功能
+net.ipv4.ip_forward = 1 然后执行sysctl -p 使修改生效
+
+
+
+
+
+
+

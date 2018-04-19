@@ -1,0 +1,330 @@
+配置DNS：
+cat /etc/sysconfig/network-scripts/ifcfg-eth1
+
+
+setup -network config 就是改网卡配置文件
+
+网卡生效：
+ifdown eth0 
+
+ifup etho
+
+/etc/init.d/network restart 针对所有网卡
+
+
+网卡配置的DNS优先于/etc/resolv.conf配置的，并且重启网卡，会把/etc/resolv.conf里的覆盖
+
+修改主机名：
+
+hostname 新名字
+
+vi /etc/sysconfig/network
+
+-->hostname
+
+
+cat /etc/hosts 也要改
+
+vi /etc/hosts ipv4 和 ipv6 修改
+
+
+用setup--dns修改hostname 直接永久生效(但命令行不生效)
+影响/etc/sysconfig/network 和 /etc/hosts
+
+route -n
+
+netstat -rn
+
+查看网关
+
+route del default gw 默认IP地址  删除默认网关
+
+route add default gw IP地址
+
+博客搜索：route
+
+
+查看网络信息：
+
+ifconfig
+
+别名ip：VIP 虚拟IP 重启失效
+
+ifconfig eth1:0 10.0.0.10 netmask 255.255.255.0 up
+ifconfig eth0:1 10.0.0.9/24 up
+
+ifconfig eth0:0 down
+
+ip的方式配多个IP，辅助IP
+
+辅助IP形式：keepalived IP
+
+网卡重启不失效：写成配置文件/etc/sysconfig/network-scripts/ifcfg-eth0:1
+
+例子：
+
+ip add
+
+ip addr add 10.0.0.13/24   dev eth1:3
+
+
+网络服务故障排除：
+
+ping www.oldboy.me  icmp协议 高速公路有没有通，linux禁止icmp
+
+ping -c3 -i2 -s512 www.baidu.com
+
+查看基础节点有没有问题：
+
+traceroute www.baidu.com -n  基础节点，
+
+
+win路由跟踪：tracet -d www.qq.com
+
+telnet www.qq.com 80 查看有没有开端口服务
+
+nmap 10.0.0.25 -p 80 查看端口
+
+不通：1.80服务没开或端口不存在
+2.
+
+lsof -i tcp:52113 查看端口服务名
+netstat -lntup|grep 52113
+
+
+1.作为网管，局域网某个机器不能上网了，排错？
+
+辅助排查：交换机环路（看日志）
+大面积上不了网：
+路由器，ISP，核心交换机，LDNS出问题了，ARP病毒欺骗网关，网关地址被占用，交换机环路（看日志）
+
+答题要体现态度和技术！
+
+2.作为linux运维，客户反映打开你部署的网站服务器访问慢，打不开排错？
+
+
+
+必会的笔试口试面试题：
+
+5个
+
+磁盘管理和文件系统：
+free -m 查看内存
+
+企业级SAS硬盘：
+15000转/分
+
+
+口头描述：扇区，盘片主轴，磁道，柱面。。等等磁盘名词
+
+计算磁盘容量：
+
+磁盘容量=512B*扇区数/每磁道*磁道数/每盘面*磁头数
+
+磁盘容量=柱面数（磁道数）*柱面大小（磁道大小*磁头数）=磁道数*磁道大小*磁头数
+        =512B*扇区数*磁道数*磁头数
+
+echo "1*8*9*6"|bc
+
+什么是MBR？如何恢复MBR？
+dd if=/dev/sda of=mbr.bin bs=512 count=1
+
+od -xa mbr.bin 查看ASCII码
+
+恢复MBR。换if和of 的位置
+
+博客---》》》》分区
+
+dumpe2fs /dev/sda1
+
+查看磁盘信息
+
+磁盘格式化的实质就是创建文件系统 一堆inode 一堆block 
+
+
+分区是设置分区表
+格式化是设置文件系统
+
+6个区：
+1p+1E（5L）
+
+/dev/sdb1 /dev/sdb5-8
+
+fdisk /dev/sdb  ---》fdisk -cu /dev/sdb
+
+m 查看帮助
+
+先p：空的
+
+n 创建
+
+p 主分区1-4
+
+1
+
+2048默认扇区
+
++10M
+
+
+n
+
+e
+
+2
+
+缺省值是默认全部剩余容量
+
+n
+
+l{L}
+
+回车
+
++10M
+
+d  删除
+
+5
+
+w保存分区表
+
+partprobe /dev/sdb 把修改的分区表告诉内核
+
+格式化文件系统
+
+mkfs -t ext4  -b 4096 /dev/sdb1 /-I 1024
+ 
+dumpe2fs - dump ext2/ext3/ext4 filesystem information
+
+tune2fs -c -1 /dev/sdb2 不让他自动做检查
+ 
+fdisk -l 查看磁盘及分区
+
+lsattr 查看特殊属性
+
+chattr 设置特殊属性 例如： +i 不可变
+
+百度GPT技术
+
+
+
+
+什么是cache？ 什么是Buffer？ 二者区别
+
+
+echo $((1048576*102))
+
+parted /dev/sdb
+
+help
+
+分区表调整成GPT格式，大于2T的
+
+mklabel gpt 
+
+mkpart primary 0 10   10M大小
+mkpart primary 11 20   10M大小
+
+mkpart logical ext4 21 30 ignore
+
+mkpart prmary linux_swap 101 8192 ignore
+
+quit
+
+rm 2
+
+p
+
+磁盘格式化：
+
+mkfs -t ext4 -b 4096 ignore
+
+tune2fs -c -1 /dev/sdb  设置不自动检查
+
+
+
+blkid
+
+UUID 挂载
+
+vi /etc/fstab
+
+开机自动挂载：/etc/fstab
+
+/dev/sdb1 /mnt ext4 defaults 0 0
+
+mount -a  加载fstab进行测试挂载
+
+mount查看挂载
+
+检查挂载：
+df -h,df -i
+
+cat /pro/mounts
+
+挂载实质：文件系统入口
+
+
+#######
+
+/etc/rc.loacl 也可以挂载
+
+
+mount -t ext4 -o loop,noatime,noexec /dev/sdb1 /mnt
+
+du -sh 查看目录空间和使用量
+
+free -m 查看内存大小（buffer，cache）
+
+fsck -C -A -f -t ext3 /dev/sdb6（检查修复linux系统） 卸载状态检查，没问题的分区最好不操作
+
+挂载U盘：mkdir /tmp/falsh 
+mount -t vfat -o iocharset=cp950 /dev/sda1 /tmp/flash
+
+df
+
+强制卸载：
+
+e2label
+
+使用物理分区构建swap：
+
+mkswap /dev/sdb1
+
+free
+
+swapon /dev/sdb1
+
+free
+
+使用文件构建swap：
+
+dd if=/dev/zero of=/tmp/swap bs=1M count=128
+
+ls -l -h /tmp/swap
+
+mkswap /tmp/swap
+
+free
+
+swapon /tmp/swap
+
+free
+
+swapon -s
+
+swapoff /tmp/swap
+
+swapoff /dev/sdb1
+
+
+
+e2fsck
+
+resize2fs
+
+
+
+
+

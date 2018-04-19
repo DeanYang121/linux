@@ -1,0 +1,1 @@
+mysqldump，mysqlbinlog，mysql，mysqladmin 当做作业总结下

@@ -1,0 +1,168 @@
+主配置文件：
+
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+	dean_abc@qq.com
+ 
+   
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 127.0.0.1
+   smtp_connect_timeout 30
+   router_id lb01_lvs1
+}
+vrrp_instance VI_1 {
+    state MASTER
+    interface eth0
+    track_interface {
+        eth0
+    }
+    garp_master_delay 30
+    virtual_router_id 55
+    priority 150
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+    192.168.196.55/32 dev eth0
+    }
+}
+
+
+virtual_server 192.168.196.55  80{
+    delay_loop 5
+    lb_algo wrr
+    lb_kind DR
+#    persistence_timeout 1	#测试环境  注释掉这条配置  这个是连接时候保持的时间
+     protocol TCP
+
+#    real_server 192.168.196.131 80 {
+#        weight 10
+#        HTTP_GET {
+#            url {
+#                path /test.html
+#                digest 871b617c404830ad4425b71c01603f1a
+#                }
+#                connect_port 80
+#                connect_timeout 2
+#                nb_get_retry 3
+#                delay_before_retry 1
+#            }
+#    }
+     real_server 192.168.196.133 80 {
+        weight 10   两个真实IP的权重值需要相同的。
+        HTTP_GET {
+            url {
+                path /test.html
+                digest 5f4bf3b762c4f0a38b8f52d47d6f337e
+                }
+                connect_port 80
+                connect_timeout 2
+                nb_get_retry 3
+                delay_before_retry 1
+                }
+                }
+
+    real_server 192.168.196.131 80 {
+        weight 10
+        HTTP_GET {
+            url {
+                path /test.html
+                digest 871b617c404830ad4425b71c01603f1a 
+                }
+                connect_port 80
+                connect_timeout 2
+                nb_get_retry 3
+                delay_before_retry 1
+                }
+                }
+
+}
+
+从配置文件：
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+	dean_abc@qq.com
+ 
+   
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 127.0.0.1
+   smtp_connect_timeout 30
+   router_id lb01_lvs2
+}
+vrrp_instance VI_1 {
+    state BACKUP
+    interface eth0
+    track_interface {
+	eth0
+	}
+    garp_master_delay 30
+    virtual_router_id 55
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+     192.168.196.55/32 dev eth0
+    }
+}
+
+virtual_server 192.168.196.55 80{
+    delay_loop 5
+    lb_algo rr
+    lb_kind DR
+#    persistence_timeout 1
+    protocol TCP
+
+#    real_server 192.168.196.131 80 {
+#        weight 10
+#        HTTP_GET {
+#            url {
+#                path /test.html
+#                digest 871b617c404830ad4425b71c01603f1a
+#            }
+#        connect_port 80
+#        connect_timeout 2
+#        nb_get_retry 3
+#        delay_before_retry 1
+#        }
+#    }
+    real_server 192.168.196.133 80 {
+        weight 10
+        HTTP_GET {
+            url {
+                path /test.html
+                digest 5f4bf3b762c4f0a38b8f52d47d6f337e
+                }
+                connect_port 80
+                connect_timeout 2
+                nb_get_retry 3
+                delay_before_retry 1
+            }
+        }
+
+   real_server 192.168.196.131 80 {
+             weight 10
+             HTTP_GET {
+                 url {
+                     path /test.html
+                     digest 871b617c404830ad4425b71c01603f1a
+                     }
+                     connect_port 80
+                     connect_timeout 2
+                     nb_get_retry 3
+                     delay_before_retry 1
+                  }
+             }
+
+}
+

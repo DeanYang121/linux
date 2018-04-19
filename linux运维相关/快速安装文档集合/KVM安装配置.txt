@@ -1,0 +1,354 @@
+https://huataihuang.gitbooks.io/cloud-atlas/content/virtual/kvm/startup/how_to_add_remove_vcpu_to_guest_on_fly.html
+优秀学习新技术的网址
+
+yum install lrzsz -y
+
+实验环境准备：
+打开VMware 编辑虚拟机  增加cpu内核数为4，选择支持Intel VT-x.
+检测是否支持命令:
+	egrep -c '(vmx|svm)' /proc/cpuinfo
+数量大于0表示支持虚拟化
+================开始实验=============
+yum list|grep kvm
+
+安装KVM命令：
+yum install qemu-kvm -y
+或者 添加上管理工具：
+yum install qemu-kvm virt-manager libvirt qemu-kvm-tools libvirt-python python-virtinst bridge-utils -y
+
+Installed:
+  bridge-utils.x86_64 0:1.5-9.el7              libvirt.x86_64 0:2.0.0-10.el7_3.5                  libvirt-python.x86_64 0:2.0.0-2.el7        
+  qemu-kvm.x86_64 10:1.5.3-126.el7_3.6         qemu-kvm-tools.x86_64 10:1.5.3-126.el7_3.6         virt-manager.noarch 0:1.4.0-2.el7
+
+KVM内核模块：
+[root@mystore1 ~]# lsmod |grep kvm
+
+[root@mystore1 ~]# modprobe kvm
+[root@mystore1 ~]# modprobe kvm-intel
+
+停止iptables和selinux。
+
+启动libvirtd：
+systemctl start libvirtd
+设置开机自启动：
+systemctl enable libvirtd
+
+[root@mystore1 ~]# ps -ef |grep dns
+nobody     3268      1  0 16:36 ?        00:00:00 /sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf --leasefile-ro --dhcp-script=/usr/libexec/libvirt_leaseshelper
+root       3269   3268  0 16:36 ?        00:00:00 /sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf --leasefile-ro --dhcp-script=/usr/libexec/libvirt_leaseshelper
+root       3321   2581  0 16:37 pts/0    00:00:00 grep --color=auto dns
+
+
+上传一个mini版的CentOS7系统文件。
+
+安装： windows版本  TightVNC
+
+命令：列出服务器上的一个文件属于哪一个RPM包
+#rpm -qf qume-img
+
+创建安装盘：
+qemu-img create -f raw /kvmtest/CentOS-7-x86_64.raw 10G
+
+mv CentOS-7-x86_64-Minimal-1511.iso /kvmtest/
+
+yum install -y virt-install
+
+创建虚拟机：
+virt-install --virt-type kvm --name CentOS-7-x86_64 --ram 2048 --cdrom=/kvmtest/CentOS-7-x86_64-Minimal-1511.iso  --disk path=/kvmtest/CentOS-7-x86_64.raw --network network=default --graphics vnc,listen=0.0.0.0 --noautoconsole
+
+=================================
+Starting install...
+ERROR    internal error: qemu unexpectedly closed the monitor: e=org.qemu.guest_agent.0 -device usb-tablet,id=input0,bus=usb.0,port=1 -vnc 0.0.0.0:0 -vga cirrus -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x7 -msg timestamp=on
+Cannot set up guest memory 'pc.ram': Cannot allocate memory
+Domain installation does not appear to have been successful.
+If it was, you can restart your domain by running:
+  virsh --connect qemu:///system start CentOS-7-x86_64
+otherwise, please restart your installation.
+=============================================
+错误原因：硬盘空间不够，内存分配不足 ，，最低（40GROM，4GRAM）
+
+Starting install...
+Creating domain...                                                                                                      |    0 B  00:00:02     
+Domain installation still in progress. You can reconnect to 
+the console to complete the installation process.
+正常的提示是这样的。
+
+使用tightvnc连接，进行操作系统的安装
+
+启动操作系统：
+virsh list --all   列出安装的系统
+virsh start CentOS-7-x86_64
+
+继续使用tightvnc连接，配置网卡。
+将开机启动打开onboot=yes
+将ipv6注释掉
+将设置为PEERDNS=no
+
+重启网络服务：
+systemctl restart network.service
+查看ip地址：
+ip ad li
+
+编辑DNS地址：
+vi /etc/resolf.conf   一般不用改
+nameserver 192.168.196.2
+
+ping www.baidu.com
+
+在物理机和虚拟机上安装：可以使用route命令
+yum install net-tools
+
+首先在物理机上查看route -n 查看ip和网关，找到虚拟机的网关地址
+ping 通  一般是x.x.x.1  或者 x.x.x.2
+然后到KVM创建的虚拟机上设置网关地址为该地址
+vi /etc/resolf.conf   一般不用改
+nameserver 192.168.122.1
+
+
+进入物理机，查看kvm进程：
+ps -ef |grep kvm
+一个系统就是以一个进程的形式存在。
+
+==========管理虚拟机====================
+libvit介绍
+systemctl stop libvirtd
+virsh list --all
+systemctl start libvirtd
+virsh list --all
+
+这个进程的开启或者关闭不影响虚拟机使用，只是为了管理虚拟机的
+
+cd /etc/libvirt/qemu
+
+cat CentOS-7-x86_64.xml
+HVM硬件虚拟机  百度一下
+virsh dumpxml CentOS-7-x86_64 > backup.xml
+
+virsh --help
+
+virsh define backup.xml
+
+virsh suspend CentOS-7-x86_64 暂停虚拟机
+virsh resume CentOS-7-x86_64  恢复虚拟机
+virsh snapshot-create CentOS-7-x86_64 创建一个快照
+virsh snapshot-list CentOS-7-x86_64 结论：KVM不支持创建快照
+
+==========CPU和内存的动态扩容=========
+virt-install --help | grep cpu
+
+head /etc/libvirt/qemu/CentOS-7-x86_64.xml
+
+查找到编辑虚拟机xml文件的方法：
+virsh edit CentOS-7-x86_64
+
+查找到<vcpu placement='static'>1</vcpu>
+这个值当前cpu个数是1，最大cpu个数是4，可以通过cat /etc/cpuinfo
+
+修改成<vcpu placement='auto' current='1'>2</vcpu>
+注意：宿主机的cpu个数应该多于或等于这个值
+
+VMware中添加cpu个数。
+通过命令添加cpu个数：
+virsh setvcpus CentOS-7-x86_64 2 --live
+
+virsh shutdown CentOS-7-x86_64
+virsh start CentOS-7-x86_64
+打开文件查看虚拟机中的动态添加的cpu：
+cat /sys/devices/system/cpu/
+cat /sys/devices/system/cpu/cpu1/online
+
+内存：xml文件里的，
+<memory>  </memory>这个里面是限制的最大内存
+<currentMemory>这里面是当前的内存
+
+修改实际内存：
+virsh qemu-monitor-command CentOS-7-x86_64 --hmp --cmd balloon: actual=1024
+virsh setmem UAKVM2 512M 
+virsh dominfo CentOS-7-x86_64
+查看内存是否改变
+
+需要编辑VM配置来避免VM关闭和启动配置丢失
+[root@UA-HA ~]# virsh setmem UAKVM2 2048M --config
+更新VM配置（这样重启后不会丢失配置）
+[root@UA-HA ~]# virsh setmem UAKVM2 3G --config
+或者直接编辑xml文件
+
+
+
+创建虚拟机，要想好设置好他的内存大小，不能超过物理机的内存大小，一般物理64G，60G就够了
+物理机需要提前规划好硬件内存大小，不然需要的时候无法扩容
+
+
+==================QEMU磁盘介绍====================
+qemu使用的镜像文件：qcow2 与 raw
+这两个是qemu（KVM）虚拟机使用的磁盘文件格式
+raw全镜像模式：无法创建快照
+qcow2镜像格式是qemu模拟器支持的一种磁盘镜像，它也是可以用一个文件的形式表示一块固定大小的
+块设备磁盘，与普通raw相比，有一下特性：
+更小的空间占用，即使文件系统不支持空洞（holes）
+支持写时拷贝（COW，copy-on-write）,镜像文件只反映底层磁盘的变化
+支持快照（snapshot），镜像文件都能够包含多个快照的历史
+可选择基于zlib的压缩方式
+可以选择AES加密
+
+copy-on-write镜像文件介绍？  百度
+
+查看镜像文件信息：qemu-img info CentOS-7-x86_64.raw
+
+====raw格式与qcow2转化====
+qemu软件包里面提供的qemu-img工具可用于image镜像一些常用操作
+命令：qemu-img convert -f raw -o qcow2 test.raw test.raw.qcow2
+ll -sh test.*
+两种格式文件的性能对比：
+test.qcow2
+test.raw
+test.raw.qcow2
+1.使用IDE作为虚拟磁盘驱动的三种镜像格式性能对比
+发现raw性能最好
+2.使用virtio作为虚拟磁盘的驱动的三种镜像格式性能对比
+
+qemu-img convert -f raw -0 qcow2 CentOS-7-x86_64.raw test.qcow2
+
+qemu-img info test.qcow2
+
+都是在物理机上进行-----
+
+网桥：
+brctl show  显示网桥的信息
+
+继续使用ip addr ：
+route -n 查看
+
+iptables -t nat -vnL
+
+桥接直接使用宿主机的ip地址
+创建桥接网卡：
+brctl addbr br0
+
+brctl show
+将创建的桥接网卡设置时上去，网络会断开，生产环境不这么玩
+brctl addif bro eth0
+
+宿主机，删除eth0上的ip地址：
+ip addr del dev eth0 192.168.56.11/24
+
+ifconfig br0 192.168.56.11/24 up
+route add default gw 192,168.56.2
+
+生产环境需要脚本测试执行是否成功
+ifconfig命令
+出现的br0  上出现11的地址
+eth0上面没有ip地址
+
+KVM虚拟机上换一个桥接网卡：
+virsh list
+virsh edit CentOS-7-x86_64
+
+找到interface标签：
+修改参数为：
+<interface type='bridge'>这里要修改network为bridge
+	<mac address=''/>不用修改
+	<source network='default'>改为<network bridge='br0' />
+	剩下的参数都不用修改
+
+现在重启虚拟机：
+virsh list
+virsh shutdown CentOS-7-x86_64
+virsh start CentOS-7-x86_64
+
+登录KVM虚拟机：
+vi /etc/syconfig/network-scripts/ifcfg-eth0
+
+改为静态ip：具体配置如下
+TYPE="Ethernet"
+BOOTPROTO="static"
+DEFROUTE="yes"
+IPV4_FAILURE_FATAL="no"
+#IPV6INIT="yes"
+#IPV6_AUTOCONF="yes"
+#IPV6_DEFROUTE="yes"
+#IPV6_FAILURE_FATAL="no"
+NAME="eno16777736"
+UUID="ad8861ea-49b8-45a0-b589-d2f970d073c6"
+DEVICE="eno16777736"
+ONBOOT="yes"
+PEERDNS="no"
+PEERROUTES="yes"
+#IPV6_PEERDNS="yes"
+#IPV6_PEERROUTES="yes"
+#IPV6_PRIVACY="no"
+IPADDR=192.168.56.111
+NETMASK=255.255.255.0
+GATEWAY=192.168.56.2
+
+重启网卡：
+systemctl restart network.service
+
+ping 192.168.56.2
+查看ping 网关通不通
+
+KVM费劲，调整这些设置，但是好处是灵活
+虚拟机的几种状态：
+未定义undefine
+定义defind
+挂起suspend
+。。。。。。
+CPU设置，要考虑到以后可以调整，所以要设置最大的CPU个数
+内存调整，可以对内存，增加和缩小
+
+=========KVM优化=========
+优化cpu命令：
+taskset --help
+taskset -cp 0 6573
+让KVM只在0上运行
+6573是qmue的进程号，当前只会在0-3上调度，设置之后只会在0上调度
+让kvm进程只在0上运行，性能提升大约10%左右
+
+内存优化：
+EPT加快映射的作用（BIOS中打开）
+优化内存寻址，使用大页内存，默认内存一页内存大小4096k
+cat /proc/memoryinfo
+使用大页内存大概可以提高10%的性能(寻址会更快)
+
+EPT加快映射的作用（BIOS中打开）
+优化内存寻址，使用大页内存，默认内存一页内存大小4096k
+cat /peoc/memoryinfo
+使用大页内存大概可以提高10%的性能(寻址会更快)
+
+进行内存的合并，查看是否大页内存。下面是大页内存，默认是开启的:
+cat /sys/kernel/mm/transparent_hugepage/enabled
+
+IO优化基本没有
+cat /sys/block/sda/queue/scheduler
+noop [deanline] cfg
+
+ssd硬盘就是要设置成noop模式
+百度io算法，以及设置方式
+百度服务器内核优化
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

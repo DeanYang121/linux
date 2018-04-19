@@ -1,0 +1,301 @@
+简单 易用 高效
+556994468671171066113595381571163239
+
+42954694882281757620016286497
+什么是NFS？
+互联网中小型网站集群架构后端常用NFS作为数据
+
+一般存储视频，图片，附件等静态资源文件。。用户上传的
+
+开发的程序不要放NFS共享里
+
+
+
+分布式文件系统 Moosefs（mfs），glusterfs，FastDFS
+不好维护，容易丢数据
+
+
+
+
+mount网络设备系统资源 /mnt
+mount 10.0.0.7:/data /mnt   IP地址为nfs服务器的IP地址
+
+mount 源 目标
+
+
+
+samba更新windows文件共享
+
+负载均衡设备
+
+
+什么是RPC服务？
+5.X  portmap
+6.X  rpcbind
+
+NFS服务器端部署环境准备：
+
+修改主机名：
+
+hostname nfs-server 临时生效
+
+vi /etc/sysconfig/network 永久生效
+
+查看ip 地址：ifconfig
+
+cat /etc/redhat-release 查看centos版本
+
+uname -r 编译次数等信息
+
+uname -m 多少位
+
+nfs软件列表：
+
+nfs-utils:NFS服务的主程序
+
+rpcbind:Centos6.X下面RPC的主程序
+
+
+rpm -qa nfs-utils rpcbind  查询是否安装
+
+rpm -qa|egrep ""
+
+yum install nfs-utils rpcbind -y
+
+在服务器端：
+/etc/init.d/rpcbind status
+
+LANG=en
+
+/etc/init.d/rpcbind start
+
+lsof -i :111  通过端口号查服务名
+
+netstat -lntup|grep rpcbind  查看端口号
+
+netstat -lntup|grep 111
+
+chkconfig --list rpcbind 查看是否开机自启动
+
+rpcinfo -p localhost 查看是否映射
+
+/etc/init.d/nfs status
+
+/etc/init.d/nfs start
+
+netstat -lntup|2049  nfs的主端口2049
+
+rpcinfo -p localhost
+
+每次重启都需要重新映射
+
+chkconfig --list nfs
+
+chkconfig nfs on
+
+先启动rpcbind
+在启动nfs        怎么设置？less /etc/init.d/rpcbind  2345 13 13启动顺序 87   87停止顺序
+
+
+工作中不会使用chkconfig启动服务，而是放到rc.local中去启动！！！！
+
+档案，知道开机会启动什么
+vim /etc/rc.local
+
+/etc/init.d/rpcbind start
+/etc/init.d/ngs start
+
+ps -ef|egrep "rpc|nfs"  查看相关进程信息
+
+man 进程名  ；；；；查进程的作用
+
+配置NFS服务端：
+
+ls -l /etc/exports NFS的配置文件
+
+（man exports
+
+/example  查看例子
+）
+
+vi /etc/exports
+
+共享目录  客户端地址
+
+/data 10.0.0.0/24(rw,sync,all_squash)    //共享目录  该目录要存在,rw,sync同步写入磁盘，保证写入数据不丢
+
+/etc/init.d/nfs reload  平滑加载不影响客户端
+
+mkdir /data
+
+showmount -e 127.0.0.1  查看共享记录
+
+/etc/init.d/nfs restart
+
+本机挂在测试：mount -t nfs 10.0.0.7:/data /mnt
+
+df -h 查看挂在信息
+
+
+客户端配置：
+
+/etc/init.d/rpcbind start
+
+LANG=en
+
+chkconfig rpcbind on
+
+vi /etc/rc.local   ====>>/etc/init.d/rpcbind start 配置开机自启动
+
+/etc/init.d/rpcbind status 查看状态
+
+showmount -e 10.0.0.7 显示是否连上
+
+如果连不上，可能是防火墙
+
+mount -t nfs 10.0.0.7:/data /mnt
+
+df -h
+
+cat /proc/mounts 查看挂载信息
+
+解决客户端不能往nfs共享目录写入的问题：
+切换到服务器端：
+cat /var/lib/nfs/etab
+cat /etc/exports
+grep 65534 /etc/passwd
+chown -R nfsnobody /data  修改共享目录的属组
+
+history
+
+切换回客户端：
+
+将挂载目录的命令加入/etc/rc.local
+mount -t nfs 10.0.0.7:/data /mnt
+
+不要放在fsteb上，fstb先启动，网络后启动，挂不上
+
+切换到客户端：
+在rc.local中编辑：/etc/init.d/rpcbind start
+mount -t nfs 10.0.0.7:/data /mnt
+
+客户端之间可以相互管理对方创建的文件
+
+删文件看上级目录怎么理解？
+
+
+nfs排除思路~~！！
+
+服务器本地文件权限控制：chown -R nfsnobody /data
+
+按操作步骤排错
+
+netstat -an|grep -i est  查看是否建立联系
+
+
+host解析：
+vi /etc/hosts
+10.0.0.7 nfs-server   
+
+
+
+exportfs -rv ????什么作用 加载配置文件生效
+
+如果追求极致：可以用如下参数挂载
+mount -t nfs -o bg,soft（hard,intr）,rsize=131072,wsize=131072 10.0.0.7:/data /mnt
+问题没生效。。。。。。
+
+如果简单易用：
+
+
+umount -lf 强制卸载已经挂载的忙碌的目录
+
+
+创建文件的时候能不手敲就不手敲，复制赞贴
+
+
+
+pkill 进程名   杀进程
+
+killall 进程名   杀进程2  平滑
+
+kill 进程号（-9） 尽量不用
+
+ps -ef | grep rsync
+
+kill -HUP ‘cat /var/run/rsyncd.pid’  or -USER2 平滑杀进程
+
+查看IP地址：makedir /backup/'ifconfig eth0|awk -F '[ :]+' 'NR==2 {print $4}''_$(data +%F) -p
+
+
+find /backup/ -type f -name "*$(date +%F).tar.gz"|xargs md5sum >backup/flag_$(date +%F)
+
+
+为每个文件加密
+
+md5sum -c flag_2015-063-14 查看加密文件是否ok
+.
+
+make && make install 安装三部曲完之后执行
+
+ln -s /usr/local/inotify-tools-3.14/ /usr/local/inotify-tools  创建软连接
+
+
+写脚本放在固定的地方
+
+
+ssh -p22 root@10.0.0.10   linux链接另一台服务器
+
+ssh-keygen -t dsa 秘钥对 设置  一路回车
+
+ls - .ssh/
+
+
+锁给客户端，钥匙给自己
+
+ssh-copy-id -i .ssh/id.dsa.pub （-p 52113 ）oldgirl@10.0.0.8 特殊端口，默认不加22端口
+
+分发公钥
+
+scp .ssh/id_dsa oldboy888@10.0.0.8~/.ssh  分发秘钥
+
+一对秘钥，实现各个机器之间的无密码通信，在分发私钥之后，自己要把公钥分发给自己
+
+scp分发的用法：
+
+脚本：
+#！/bin/sh
+. /etc/init.d/functions
+
+for n in 8 9
+do
+  scp -rp $1 oldboy888@10.0.0.$n &>/dev/null
+  if [ $? -eq 0 ]
+  then
+      action "$n is ok" /bin/true
+  else
+      action "$n is fail" /bin/false
+  fi
+done
+
+从A机器指定 目录（把要分发的文件或目录复制到当前目录，家目录）分发到 客户端普通用户的家目录
+
+
+echo "oldboy888 ALL=(ALL) NOPASSWD:/usr/bin/rsync" >> /etc/sudoers
+
+visudo -c 检查语法
+
+/etc/init.d/postfix restart
+
+
+批量替换：在vi编辑器中：%s#需要被替换的旧的#新的#g
+
+
+vim /etc/mail.rc  设置发件人。发件邮箱
+
+expect语言  解决交互式问题
+
+yum install expect -y
+
+which expect
+

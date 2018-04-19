@@ -1,0 +1,5 @@
+2.安装rpcbind失败，并且nfs不能创建虚拟用户nfsnobody
+
+原因：/etc/passwd /etc/gshadow 等创建用户相关的文件上锁了
+
+方法：解锁，chattr -i /etc/passwd /etc/passwd

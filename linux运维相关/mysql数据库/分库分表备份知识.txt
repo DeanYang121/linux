@@ -1,0 +1,45 @@
+如何做分库备份：
+分库备份实际上就是执行一个备份语句备份一个库，如果数据库里有多个库，就执行多条相同的备份单个库的备份语句就可以备份多个库了
+mysqldump  -uroot  -p'123456'  -B 库1…
+mysqldump  -uroot  -p'123456'  -B 库2…
+
+mysql -uroot  -p'123456' -e "show  databases;"
+
+mysql  -uroot  -p'123456'  -e  "show  databases;"|grep  -Evi  "database|infor|perfor"
+
+mysql  -uroot  -p'123456'  -e  "show  databases；;"|grep  -Evi  "database|infor|perfor"|sed    -r  's/^([a-z].*$)/mysqldump  -uroot  -p'123456'  --events  -B \1|gzip  >/opt/\1.sql.gz /g'|bash
+ 
+分库备份：主要是为了恢复。上述是法一。
+
+分库分表备份视频：
+http://edu.52cto.com/course/course_id-808.html
+
+备份单个表：
+
+mysqldump -u 用户名 -p 数据库名 表名 >备份的文件名
+
+mysqldump -u root -p‘passwd’ --compact oldboy student >/opt/table.sql
+
+分库备份的shell程序：
+for dbname in `mysql -uroot -p'123456' -e  "show  databases;"|grep  -Evi  "database|infor|perfor"`
+do 
+	mysqldump -uroot -p'yy631562' --events -B $dbname|gzip >/opt/bak_${dbname}_bak.sql.gz
+done
+
+
+备份多个表：
+mysqldump -u 用户名 -p 数据库名 表名1 表名2 >备份的文件名
+
+mysqldump -uroot -p'oldboy' oldboy course test >/opt/two_tables.sql
+
+分表备份的命令：
+mysqldump -u root -p oldboy test >oldboy_test.sql
+mysqldump -u root -p oldboy test1 >oldboy_test.sql1
+
+分表备份缺点：文件多，碎
+1.备份一个完整的全备，在做一个分库分表备份
+2.脚本批量批量服务多个SQL文件
+
+
+ 
+  

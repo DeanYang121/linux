@@ -1,0 +1,7 @@
+lower_case_table_names=1 让MySQL不区分大小写！
+此前有款网络游戏的数据库是采用MySQL。操作系统是CentOS。部分服务器的操作系统又是Windows。
+出现了一个小毛病。那就是MySQL大小写的问题。 在CentOS安装的MySQL的配置文件中(/etc/my.cnf)，
+是没有lower_case_table_names=1这行的。 在Windows安装的MySQL的配置文件中(my.ini)，
+是有lower_case_table_names=1这行的。 lower_case_table_names=1的用途是让MySQL实现不区分大小写。 
+所以当时出了些毛病，后来才发现是这个的问题。连忙在CentOS中的my.cnf(/etc/my.cnf)的[mysqld]区段下增加:
+lower_case_table_names=1

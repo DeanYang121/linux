@@ -1,0 +1,65 @@
+安装好mysql之后
+
+mkdir -p /data/{3306,3307}/data
+tree /data/
+vim /data/3306/my.cnf
+vim /data/3307/my.cnf
+vim /data/3306/mysql 
+vim /data/3307/mysql 
+chown -R mysql.mysql /data
+find /data -name mysql|xargs chmod 700
+echo $PATH
+/application/mysql/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+cd /application/mysql/scripts/
+./mysql_install_db --basedir=/application/mysql --datadir=/data/3306/data --user=mysql
+./mysql_install_db --basedir=/application/mysql --datadir=/data/3307/data --user=mysql
+tree /data/
+/data/3306/mysql start
+/data/3307/mysql start
+netstat -lntup |grep 330
+
+echo "/data/3306/mysql start">>/etc/rc.local
+echo "/data/3307/mysql start">>/etc/rc.local
+tail -2 /etc/rc.local 
+
+登录测试：
+mysql -S /data/3306/mysql.sock 
+mysql -S /data/3307/mysql.sock 
+
+/data/3306/mysql stop
+/data/3307/mysql stop
+
+设置密码：
+mysqladmin -u root -S /data/3306/mysql.sock password 'yy631562'
+mysqladmin -u root -S /data/3307/mysql.sock password 'yy631562'
+登录：
+mysql -uroot -pyy631562 -S /data/3306/mysql.sock 
+
+优化：
+调整启动文件/data/3306/mysql的权限，，如果是755或者644  会被其他用户看到，调整权限为700
+[root@mysql-jq data]# find /data -type f -name "mysql" -exec chmod 700 {} \;
+[root@mysql-jq data]# find /data -type f -name "mysql" -exec chown root.root {} \;
+
+find /data -type f -name "mysql" -exec ls -l {} \;
+
+添加一个多实例：
+
+mkdir -p /data/3308/data
+cp /data/3306/my.cnf /data/3308
+cp /data/3306/mysql /data/3308
+
+sed -i 's/3306/3308/g' /data/3308/my.cnf 
+sed -i 's/server-id = 1/server-id = 8 /g' /data/3308/my.cnf
+sed -i 's/3306/3308/g' /data/3308/mysql 
+chown -R mysql:mysql /data/3308
+chmod 700 /data/3308/mysql
+cd /application/mysql/scripts/
+./mysql_install_db --basedir=/application/mysql --datadir=/data/3308/data --user=mysql
+/data/3308/mysql start
+netstat -lntup 3308
+
+本地登录mysql命令：
+mysql -uroot -p'yy631562' -S /data/3307/mysql.sock
+
+远程链接：
+mysql -uroot -p'yy631562' -h 10.0.0.7 -P 3307

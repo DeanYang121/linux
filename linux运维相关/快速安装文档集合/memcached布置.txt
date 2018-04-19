@@ -1,0 +1,63 @@
+在memcached服务端：
+yum install libevent libevent-devel nc -y
+rpm -qa libevent libevent-devel nc 
+yum install memcached -y
+
+也可以编译安装：
+tar zxf memcache-1.4.24.tar.gz
+cd memcache-1.4.24.tar.gz
+./configure 
+make 
+make install
+cd ../
+
+rpm -qa memcached
+   
+which memcached
+
+启动：
+memcached -m 16m -p 11211 -d -u root -c 8192 -P /var/run/11211.pid
+memcached -m 16m -p 11212 -d -u root -c 8192 -P /var/run/11212.pid
+
+lsof -i :11211
+
+vim /etc/rc.local 
+加入开机自启动
+
+
+memcached客户端：
+tar zxf memcache-2.2.7.tgz 
+cd memcache-2.2.7
+/application/php/bin/phpize 
+./configure --enable-memcache --with-php-config=/application/php/bin/php-config 
+make
+make install
+cd ..
+ls -l /application/php5.3.27/lib/php/extensions/no-debug-non-zts-20090626/
+total 204
+-rwxr-xr-x 1 root root 206344 Nov 29 10:18 memcache.so
+
+cd /application/php/lib/
+vim php.ini
+添加下面的内容：
+extension_dir = "/application/php5.3.27/lib/php/extensions/no-debug-non-zts-20090626/"
+extension=memcache.so
+
+/application/php/sbin/php-fpm -t
+
+pkill php-fpm 
+/application/php/sbin/php-fpm 
+ps -ef|grep php-fpm|grep -v grep
+
+cd /application/nginx/html/www/
+vim op_mem.php
+<?php
+        $memcache = new Memcache;
+        $memcache->connect("192.168.110.132",11211) or die ("Could not connect Mc server");
+        $memcache->set('key','yagdi book');
+        $get = $memcache->get('key');
+        echo $get
+?>
+
+/application/php/bin/php op_mem.php 
+

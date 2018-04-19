@@ -1,0 +1,6 @@
+tee(选项)(参数) 
+选项 
+-a：向文件中重定向时使用追加模式； 
+-i：忽略中断（interrupt）信号。
+
+来自: http://man.linuxde.net/tee

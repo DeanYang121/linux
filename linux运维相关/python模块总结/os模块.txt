@@ -1,0 +1,87 @@
+getpass模块：
+
+getpass.getpass([prompt[, stream]]):
+prompt:为用户输入的提示字符串，默认为：Password:
+>>> pwd = getpass.getpass()
+Password:
+>>> print pwd
+>>> pwd = getpass.getpass(prompt='please input your password: ')
+please input your password:
+>>> print pwd
+dudiaohanjiangxue
+
+============================================
+getpass.getpass([prompt[, stream]])：提示用户输入密码。用户输入的内容并不会在屏幕上显示出来。
+getpass.getuser()：获得登陆的用户名
+
+>>> user = getpass.getuser()
+>>> print user
+root
+
+>>> import os #导入os模块
+>>> help(os)   #查看os模块帮助文档，里面详细的模块相关函数和使用方法
+
+
+os.sep 更改操作系统中的路径分隔符。
+os.getcwd()获取当前路径，这个在Python代码中比较常用。
+os.listdir() 列出当前目录下的所有文件和文件夹。
+os.mkdir('haha') 创建一个名为haha的目录
+os.rmdir（‘c’）删除一个名为c的目录
+os.remove() 方法可以删除指定的文件。
+os.system() 方法用来运行shell命令。
+os.chdir() 改变当前目录，到指定目录中。
+os.rename('abc.txt'，'reabc.txt')重命名一个文件
+
+操作系统相关的调用和操作 import os 
+    os.environ 一个dictionary 包含环境变量的映射关系 os.environ["HOME"] 可以得到环境变量HOME的值 
+    os.chdir(dir) 改变当前目录 os.chdir('d:\\outlook') 注意windows下用到转义 
+    os.getcwd() 得到当前目录 
+    os.getegid() 得到有效组id  os.getgid() 得到组id 
+    os.getuid() 得到用户id  os.geteuid() 得到有效用户id 
+    os.setegid os.setegid() os.seteuid() os.setuid() 
+    os.getgruops() 得到用户组名称列表 
+    os.getlogin() 得到用户登录名称 
+    os.getenv 得到环境变量 
+    os.putenv 设置环境变量 
+    os.umask 设置umask 
+    os.system(cmd) 利用系统调用，运行cmd命令 
+
+用os.path编写平台无关的程序 
+    os.path.abspath("1.txt") == os.path.join(os.getcwd(), "1.txt") 
+    os.path.split(os.getcwd()) 用于分开一个目录名称中的目录部分和文件名称部分。 
+    os.path.join(os.getcwd(), os.pardir, 'a', 'a.doc') 全成路径名称. 
+    os.pardir 表示当前平台下上一级目录的字符 .. 
+    os.path.getctime("/root/1.txt")  返回1.txt的ctime(创建时间)时间戳 
+    os.path.exists(os.getcwd()) 判断文件是否存在 
+    os.path.expanduser('~/dir') 把~扩展成用户根目录 
+    os.path.expandvars('$PATH') 扩展环境变量PATH 
+    os.path.isfile(os.getcwd()) 判断是否是文件名，1是0否 
+    os.path.isdir('c:\Python26\temp') 判断是否是目录,1是0否 
+    os.path.islink('/home/huaying/111.sql') 是否是符号连接 windows下不可用 
+    os.path.ismout(os.getcwd()) 是否是文件系统安装点 windows下不可用 
+    os.path.samefile(os.getcwd(), '/home/huaying') 看看两个文件名是不是指的是同一个文件 
+    os.path.walk('/home/huaying', test_fun, "a.c")  
+
+>>> import os
+>>> print os.stat("/root/python/zip.py")
+(33188, 2033080, 26626L, 1, 0, 0, 864, 1297653596, 1275528102, 1292892895)
+>>> print os.stat("/root/python/zip.py").st_mode   #权限模式
+33188
+>>> print os.stat("/root/python/zip.py").st_ino   #inode number
+2033080
+>>> print os.stat("/root/python/zip.py").st_dev    #device
+26626
+>>> print os.stat("/root/python/zip.py").st_nlink  #number of hard links
+1
+>>> print os.stat("/root/python/zip.py").st_uid    #所有用户的user id
+0
+>>> print os.stat("/root/python/zip.py").st_gid    #所有用户的group id
+0
+>>> print os.stat("/root/python/zip.py").st_size  #文件的大小，以位为单位
+864
+>>> print os.stat("/root/python/zip.py").st_atime  #文件最后访问时间
+1297653596
+>>> print os.stat("/root/python/zip.py").st_mtime  #文件最后修改时间
+1275528102
+>>> print os.stat("/root/python/zip.py").st_ctime  #文件创建时间
+1292892895

@@ -1,0 +1,10 @@
+因LVS高可用环境需要，使用页面检测的方式，故安装genhash便于hash值的获取；
+#cd /usr/local/
+#tar xzvf genhash-1.4.tar.gz
+#cd genhash-1.4
+#./configure && make && make install
+ 
+使用方法说明：
+genhash -s IP -p 端口 -u 文件名
+例如：
+genhash -s 172.10.10.11 -p 80 -u web4s/index.html

@@ -1,0 +1,10 @@
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+grep SELINUX=disabled /etc/selinux/config
+
+setenforce 0  临时将selinux调成perimissive
+
+getenforce
+
+关闭防火墙：
+/etc/init.d/iptables stop
+/etc/init.d/iptables status 

@@ -1,0 +1,48 @@
+二进制安装：
+
+yum install lrzsz -y
+rz 上传mysql安装包
+du mysql-5.5.15-linux2.6-i686.tar.gz 
+chattr -i /etc/passwd /etc/shadow /etc/group /etc/gshadow /etc/inittab
+groupadd mysql
+useradd -s /sbin/nologin -g mysql -M mysql
+id mysql
+cd /home/dean/tools/
+ls -sh mysql-5.5.15-linux2.6-i686
+mkdir /application/
+mv mysql-5.5.15-linux2.6-i686 /application/mysql-5.5.15
+ln -s /application/mysql-5.5.15/ /application/mysql
+cd /application/mysql
+ls -l support-files/*.cnf
+mkdir -p /application/mysql/data
+chown -R mysql.mysql /application/mysql/
+/application/mysql/scripts/mysql_install_db --basedir=/application/mysql --datadir=/application/mysql/data --user=mysql
+cp support-files/mysql.server /etc/init.d/mysqld
+chmod +x /etc/init.d/mysqld
+
+sed -i 's#/usr/local/mysql#/application/mysql#g' /application/mysql/bin/mysql_safe /etc/init.d/mysqld 
+mv my.cnf my.cnf.ori
+cd /application/mysql
+/bin/cp support-files/my-small.cnf /etc/my.cnf
+/etc/init.d/mysqld start
+chkconfig --add mysqld
+export PATH=/application/mysql/bin:$PATH
+echo 'export PATH=/application/mysql/bin:$PATH' >>/etc/profile
+mysql
+mysqladmin -u root password 'yy631562'
+
+数据库优化：
+show databases;
+drop database test;
+
+报错：
+mysql> drop database test;
+ERROR 1010 (HY000): Error dropping database (can't rmdir './test/', errno: 17)
+解决：
+cd data/
+cd test/
+ls -al
+rm -f .empty 
+
+
+

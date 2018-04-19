@@ -1,0 +1,161 @@
+iptables防火墙：
+
+关闭两项功能：
+selinux （生产中也是关闭的），ids
+iptables（生产中看情况，内网关闭，外网打开）
+大并发的情况，不能开iptables，用硬件防火墙
+
+安全优化：
+尽可能不给服务器配置外网ip。可以通过代理转发
+2.并发不是很大的情况在外网ip的环境，开启防火墙
+
+老男孩博客搜索优化：
+http://oldboy.blog.51cto.com/2561410/1336488
+
+Netfilter/iptables是表的容器，iptables包含的各个表（filter，NAT，MANGLE,RAW）
+
+iptables的表又是链的容器：
+链：INPUT，OUTPUT，FORWARD，PREROUTING，POSTROUTING
+
+链是规则容器：
+
+规则：一条条过滤的语句
+Filter表：有INPIT FORWARD OUTPUT  这三条链
+
+Nat表：OUTPUT PREROUTING POSTROUTING
+
+Mangle表：INPUT FORWARD OUTPUT PREROUTING POSTROUTING
+
+所有的链名要大写：
+filter表是iptables默认使用的表
+
+iptables -h 查帮助命令
+iptables -V 查看版本
+
+/etc/init.d/iptables start 失败
+解决：setup-->Firewall configuration-->enable
+
+查看默认表的规则：
+iptables -L -n
+
+查看iptables是都加载到了内核模块：
+lsmod | egrep "nat|filter"
+
+如果没有加载到内核，可放到rc.local
+
+modprobe ip_tables
+modprobe iptable_filter
+modprobe iptable_nat
+modprobe iptable_conntrack
+modprobe ip_conntrack_ftp
+modprobe ip_nat_ftp
+modprobe ipt_state
+
+iptables -F 清空所有规则，不会默认处理
+iptables --flush
+iptables -X 删除用户自定义的链
+iptables -Z 链的计数器清零
+
+iptables语法：
+
+iptables -t [table] -[AD] chain rule-specification [option]
+
+iptables -t filter -A INPUT -p tcp --dport 52113 -j DROP
+
+处理行为有：ACCEPT DROP REJECT 比较：DROP 好于 REJECT
+
+禁止用户访问80端口和3306：
+iptables -t filter -A INPUT -p tcp --dport 80 -j DROP
+iptables -t filter -A INPUT -p tcp --dport 3306 -j DROP
+iptables -L -n --line-numbers
+
+找到规则号码,然后删除：Delete，Add
+iptables -t filter -D INPUT 1
+
+添加规则：
+-A ：是添加规则到指定链的结尾，最后一条
+-i：是添加规则到指定链的开头，第一条
+
+封IP用 -i  放在前面。
+
+awk '{print $1}' /app/access_log |sort|uniq -c |sort -rn -k1
+
+指定位置插入规则：插到第二行
+iptables -I INPUT 2 -p tcp --dport 8080 -j DROP
+
+iptables -L -n --line-numbers
+
+总结删除规则的方法：
+iptables -D INPUT -p tcp --dport 8080 -j DROP
+iptables -F
+/etc/init.d/iptables restart
+iptables -D INPUT 规则序号
+
+禁止10.0.0.0网段连入：
+iptables -t filter -A INPUT -i eth0 -s 10.0.0.0/24 -j DROP
+
+测试配置拒绝规则：
+
+iptables -t filter -A INPUT -i eth0 -s ! 10.0.0.115 -j DROP
+
+!  :表示非的意思
+
+原地址不是10.0.0.101单个IP的禁止连接
+iptables -t filter -I INPUT -i eth0 -s ! 10.0.0.101 -j DROP
+iptables -A INPUT -p all -i eth0 ! -s 10.0.0.101 -j DROP   (-p udp,tcp,icmp,all)
+iptables -t filter -I INPUT -p icmp --icmp-type 8 -i eth0 -s ! 10.0.0.115 -j DROP
+
+源地址不是10.0.0.0/24的网段禁止连接
+iptabels -t filter -A INPUT -i eth0 -s ! 10.0.0.0/all -j DROP
+
+如果不指定-p 协议  ，默认是 -p all(tcp,udp,icmp)
+
+
+匹配单一端口：
+iptables -A INPUT -p tcp --sport 53
+iptables -A INPUT -p tcp --dport 53
+配置指定端口之外的端口：
+iptables -A INPUT -p tcp --dport ! 22
+iptables -I INPUT -p tcp ! --dport 22 -s 10.0.0.123 -j DROP
+
+匹配端口范围：
+
+iptables -A INPUT -p tcp --sport 22:80
+iptables -I INPUT -m multiport --dport 21,22,23,24 -j ACCEPT
+
+iptables -I INPUT -p tcp --dport 3306:8809 -j ACCEPT
+iptables -I INPUT -p tcp --dport 18:80 -j DROP
+
+匹配ICMP类型：
+iptables -A INPUT -p icmp --icmp-type 8 -j DROP
+iptables -A INPUT -p icmp -m imcp --icmp-type any -j ACCEPT
+iptables -A FORWARD -s 192.168.1.0/24 -p icmp -m icmp icmp-type any -j ACCEPT
+
+匹配指定的网络接口：
+iptables -A INPUT -i eth0
+iptablle -A FORWARD -o eth0
+
+匹配网络状态：
+-m state --state
+NEW：已经或将启动新的连接
+ESTABLISHED：已建立的连接
+RELATED：正在启动新连接
+INVALID:非法或无法识别的
+
+FTP服务是特殊，需要配状态连接
+
+允许关联的状态包通过（web服务不要使用FTP服务）
+
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+-m limit
+ --limit n/{second/minute/hour}:指定时间内的请求速率“n”为速率，后面为时间：秒，分，时
+	--limit-burst [n] :在同一个时间内允许通过的请求"n"为数字，不能指定默认为5
+本机地址：172.16.14.1 ，允许172.16.0.0/16网络ping本机，但限制每分钟请求不超过20，每次并发不能超过6个
+
+iptables -A INPUT -s 172.16.0.0/16 -d 172.16.14.1 -p icmp --icmp-type 8 -m limit --limit 20/min --limit-burst 6 -j ACCEPT
+
+iptables -A OUTPUT -s 172.16.14.1 -d 172.16.0.0/16 -p icmp --icmp-tyep 0 -j ACCEPT
+
+

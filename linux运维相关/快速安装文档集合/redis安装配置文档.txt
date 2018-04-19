@@ -1,0 +1,56 @@
+yum install gcc make
+curl http://download.redis.io/releases/redis-3.0.4.tar.gz -o redis-3.0.4.tar.gz
+make
+make install
+
+http://www.awaimai.com/761.html	参考网页
+https://linux.cn/article-6719-1.html
+
+创建redis 配置文件夹。
+mkdir /etc/redis
+
+在/var/lib/redis 下创建有效的保存数据的目录
+mkdir -p /var/lib/redis/6379
+
+为了让 redis 正常工作需要配置一些内核参数：
+配置 vm.overcommit_memory 为1，这可以避免数据被截断，详情见此。
+sysctl -w vm.overcommit_memory=1
+
+
+修改 backlog 连接数的最大值超过 redis.conf 中的 tcp-backlog 值，即默认值511。你可以在kernel.org 找到更多有关基于 sysctl 的 ip 网络隧道的信息。
+
+sysctl -w net.core.somaxconn=512
+
+取消对透明巨页内存（transparent huge pages）的支持，因为这会造成 redis 使用过程产生延时和内存访问问题。
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+
+redis.conf 是 redis 的配置文件，然而你会看到这个文件的名字是 6379.conf ，而这个数字就是 redis 监听的网络端口。
+如果你想要运行超过一个的 redis 实例，推荐用这样的名字。
+
+cp redis.conf /etc/redis/6379.conf
+
+现在编辑这个文件并且配置参数。
+vi /etc/redis/6379.conf
+
+设置 daemonize 为 no，systemd 需要它运行在前台，否则 redis 会突然挂掉。
+daemonize no
+
+设置 pidfile 为 /var/run/redis_6379.pid：
+pidfile /var/run/redis_6379.pid
+
+port如果不准备用默认端口，可以修改
+port 6379
+
+设置日志级别。
+loglevel notice
+
+修改日志文件路径。
+logfile /var/log/redis_6379.log
+
+设置目录为 /var/lib/redis/6379
+dir /var/lib/redis/6379
+
+==========================================
+https://linux.cn/article-6719-1.html
+http://www.awaimai.com/761.html
+https://itbilu.com/database/redis/Ey_r7mWR.html

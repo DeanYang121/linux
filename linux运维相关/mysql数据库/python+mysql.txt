@@ -1,0 +1,19 @@
+虽然大家可能在python2.x中用习惯了mysqldb，但是在python3.x中已经不支持那个组件了。
+
+取而代之的是：
+
+import pymysql
+
+所以，大家pip起来吧。听说MySQL官方出了个新版，不过我还没去看。
+
+我这用的例子如下：
+
+import pymysql
+conn = pymysql.connect(host='127.0.0.1', port=3306, user='root', passwd='test',
+db='mysql')
+cur = conn.cursor()
+cur.execute("SELECT * FROM user")
+for r in cur.fetchall():
+           print(r)
+           #cur.close()
+conn.close()

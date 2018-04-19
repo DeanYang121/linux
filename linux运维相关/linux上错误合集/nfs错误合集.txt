@@ -1,0 +1,17 @@
+1.mount: wrong fs type, bad option, bad superblock on 125.64.41.244:/data/img,
+       missing codepage or helper program, or other error
+       (for several filesystems (e.g. nfs, cifs) you might
+       need a /sbin/mount.<type> helper program)
+       In some cases useful info is found in syslog - try
+       dmesg | tail  or so
+ 
+根据错误提示，查看/sbin/mount.<type>文件，果然发现没有/sbin/mount.nfs的文件，安装nfs-utils即可
+安装rpcbind，安装nfs-utils
+
+2.[root@LAMP ~]# umount 192.168.110.128:/bbs/static  /var/html/bbs/static  
+umount.nfs: /var/html/bbs/static: device is busy
+
+强制卸载: umount -lf /mnt
+
+3.不能写，要把客户端和服务端挂载目录的用户和属组设置成相同的nfsnobody
+

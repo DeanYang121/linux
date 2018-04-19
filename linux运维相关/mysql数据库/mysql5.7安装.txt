@@ -1,0 +1,55 @@
+linux操作系统的mnysql安装包分为以下三类：
+RPM：RPM软件包是一种在linux下的安装文件，mysql的RPM安装文件分为两个：服务端和客户端，需要分别下载安装
+Generic Binary：二进制安装包，经过编译生成的二进制文件软件包
+源码包：源码包是mysql数据库的源代码，用户需要自己编译成二进制文件之后才能安装
+
+安装和配置mysql的RPM包：
+/usr/bin   客户端和脚本
+/usr/sbin  mysql服务器
+/var/lib/mysql  日志文件和数据库
+/usr/share/info  信息格式的手册
+/usr/share/man  unix帮助页
+/usr/include/mysql 头文件
+/usr/lib/mysql 库
+/usr/share/mysql  错误消息，字符集，示例配置文件
+标准安装，只需要安装:MySQL=server和MySQL-client。
+下载MySQLCommunity server 5.7.10    red hat Enterprise linux系列
+
+tar -xf MySQL-5.7.10-1.reh15.i386.tar
+
+一般情况下只需安装：server和client 端
+su root
+rpm -ivh server.rpm
+mysqladmin -u root password"new-password"  更改root用户密码
+mysql_secure_installation 会删除测试数据库和匿名用户：
+mysqlbug script 会报告bug
+
+查看系统之前是否有旧版的mysql：rpm -qa|grep -i mysql
+
+rpm -ev mysql-version-4.e15_4.2
+
+启动服务，输入命令：
+service mysql restart
+从5.0开始，mysql的服务改名为mysql,而不是mysqld
+
+service mysql restart|stop|restart|status
+
+安装客户端：rpm -ivh client.rpm
+mysqladmin -uroot password'123456'更改root密码
+
+=================源码安装====================================
+安装Cmaked
+安装make
+安装C++编译器 gc++
+安装perl
+安装rpmbuild 包管理工具
+
+
+编译安装：
+rpmbuild --rebuild --clean MySQL-5.7.10-1.linux2.6.src.rpm
+编译完之后形成一个rpm包，然后按照上面的方式安装即可
+
+
+
+
+

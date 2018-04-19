@@ -1,0 +1,62 @@
+全量备份：
+mysqldump的工作原理：sql语句的集合
+
+备份多个库：mysqldump -uroot -p‘123456’ -B  数据库名1 数据库名2 |gzip >/opt/mysql.sql.gz
+
+mysqldump -uroot -ppassword -B -A --events -x|gzip >bak_($date +%F).sql.gz
+
+-x:锁表 会影响读写，尽量晚上操作
+
+-A ：备份所有库 
+
+-B：备份多个库，参数后面所有名字参量都被看作数据库名，并在备份的sql中 添加 use 库名：create database 库等的功能 
+加了-B参数以后，导入时会检查是否有数据库，如果没有会创建，并链接使用。而不加-B参数，则需要先删除原库中的数据在进行恢复导入
+加-B参数是有利的！！！
+
+--compact ：优化备份文件大小减小输出注释
+http://blog.chinaunix.net/uid-20892230-id-5114784.html 使用compact参数导致导入数据混乱的案例
+
+--events 为备份的数据库备份事件，压缩效率近三倍
+
+gzip：压缩效率高 
+
+
+备份单个库：
+mysqldump -uroot -p密码  -B  -x wordpress | gzip>bak_wordpress_($date +%F).sql.gz 
+备份单个库的单个表：
+mysqldump -uroot -p密码 -x wordpress user | gzip>bak_wordpress_($date +%F).sql.gz 
+
+编写脚本实现数据库的备份，以及定时备份
+
+数据库恢复：
+cd /opt
+gzip -d bak_wortdpress_2016-07-01.sql.gz
+mysql -uroot -p密码  < /opt/bak_wordpress.sql
+
+恢复2：
+在mysql命令行使用：source 文件绝对路径.sql 同样可以恢复
+
+增量备份：
+
+增量恢复数据库：
+1.修改my.cnf，将log-bin=mysql-oldboy，打开
+更改数据时候会在data目录生产一个记录文件
+最好停库恢复
+不能停的情况
+mysqladmin -uroot -p123456 flush-log  切割
+
+mysql -uroot -p123456 -e "select * from oldboy.test"
+
+mysqlbinlog -d  oldboy  mysqlbin_oldboy.00001 >bin.sql
+
+vi bin_sql
+进去查找破坏数据库的那条操作。把它删除，然后恢复（如果不能确定是那条语句,就在大概的时间点上，将之前和之后的语句分隔开，进行两次恢复）
+mysql -uroot -p123456 oldboy </opt/oldboy_bak.sql
+
+show  create table student;查看建表语句
+
+
+不乱码的思想：建议中英文环境：UTF-8，linux，客户端，服务端，库，表，程序！统一字符集
+UTF-8
+
+

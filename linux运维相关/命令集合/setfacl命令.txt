@@ -1,0 +1,25 @@
+setfacl命令是用来在命令行里设置ACL（访问控制列表）。在命令行里，一系列的命令跟随以一系列的文件名。
+
+-b,--remove-all：删除所有扩展的acl规则，基本的acl规则(所有者，群组，其他）将被保留。 -k,--remove-default：删除缺省的acl规则。如果没有缺省规则，将不提示。 -n，--no-mask：不要重新计算有效权限。setfacl默认会重新计算ACL mask，除非mask被明确的制定。 --mask：重新计算有效权限，即使ACL mask被明确指定。 -d，--default：设定默认的acl规则。 --restore=file：从文件恢复备份的acl规则（这些文件可由getfacl -R产生）。通过这种机制可以恢复整个目录树的acl规则。此参数不能和除--test以外的任何参数一同执行。 --test：测试模式，不会改变任何文件的acl规则，操作后的acl规格将被列出。 -R，--recursive：递归的对所有文件及目录进行操作。 -L，--logical：跟踪符号链接，默认情况下只跟踪符号链接文件，跳过符号链接目录。 -P，--physical：跳过所有符号链接，包括符号链接文件。 --version：输出setfacl的版本号并退出。 --help：输出帮助信息。 --：标识命令行参数结束，其后的所有参数都将被认为是文件名 -：如果文件名是-，则setfacl将从标准输入读取文件名。
+
+选项-m和-x后边跟以acl规则。多条acl规则以逗号(,)隔开。选项-M和-X用来从文件或标准输入读取acl规则。 
+选项--set和--set-file用来设置文件或目录的acl规则，先前的设定将被覆盖。 
+选项-m(--modify)和-M(--modify-file)选项修改文件或目录的acl规则。 
+选项-x(--remove)和-X(--remove-file)选项删除acl规则
+
+当使用-M，-X选项从文件中读取规则时，setfacl接受getfacl命令输出的格式。每行至少一条规则，以#开始的行将被视为注释。 当在不支持ACLs的文件系统上使用setfacl命令时，setfacl将修改文件权限位。如果acl规则并不完全匹配文件权限位，setfacl将会修改文件权限位使其尽可能的反应acl规则，并会向standard error发送错误消息，以大于0的状态返回
+
+文件的所有者以及有CAP_FOWNER的用户进程可以设置一个文件的acl。（在目前的linux系统上，root用户是唯一有CAP_FOWNER能力的用户）
+
+ACL规则
+
+setfacl命令可以识别以下的规则格式：
+
+
+[d[efault]:] [u[ser]:]uid [:perms] 指定用户的权限，文件所有者的权限（如果uid没有指定）。
+[d[efault]:] g[roup]:gid [:perms] 指定群组的权限，文件所有群组的权限（如果gid未指定） 
+[d[efault]:] m[ask][:] [:perms] 有效权限掩码 [d[efault]:] o[ther] [:perms] 其他的权限
+
+恰当的acl规则被用在修改和设定的操作中，对于uid和gid，可以指定一个数字，也可指定一个名字。perms域是一个代表各种权限的字母的组合：读-r写-w执行-x，执行只适合目录和一些可执行的文件。pers域也可设置为八进制格式
+
+来自: http://man.linuxde.net/setfacl

@@ -1,0 +1,16 @@
+apache：
+checking for zlib location... not found 编译失败：yum install zlib zlib-devel -y
+
+启动apache服务失败：
+httpd: apr_sockaddr_info_get() failed for LAMP
+httpd: Could not reliably determine the server's fully qualified domain name, using 127.0.0.1 for ServerName
+
+解决办法:在/application/apache/conf/httpd_conf  中加入:
+ServerName localhost:80
+
+启动apache服务排错：
+1.关闭iptables
+2.关闭selinux
+3.netstat -lntup|grep httpd
+4.lsof -i :80
+5.wget http：//192.168.110.131

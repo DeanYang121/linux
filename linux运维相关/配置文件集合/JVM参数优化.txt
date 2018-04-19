@@ -1,0 +1,24 @@
+==================JVM参数=======================================
+   <server-default>  
+            <!-- 服务器模式 -->  
+           <jvm-arg>-server</jvm-arg>   
+            <!-- JMX监控配置 -->  
+           <jvm-arg>-Djava.rmi.server.hostname=192.168.110.136</jvm-arg>   
+           <jvm-arg>-Dcom.sun.management.jmxremote.port=50000</jvm-arg>   
+           <jvm-arg>-Dcom.sun.management.jmxremote.ssl=false</jvm-arg>   
+           <jvm-arg>-Dcom.sun.management.jmxremote.authenticate=true</jvm-arg>   
+           <jvm-arg>-Dcom.sun.management.jmxremote.password.file=${resin.root}/conf/jmxremote.password</jvm-arg>                    <jvm-arg>-Dcom.sun.management.jmxremote.access.file=${resin.root}/conf/jmxremote.access</jvm-arg>  
+           <!-- JXM监控配置end -->  
+           <!-- 性能参数 -->  
+           <jvm-arg>-XX:+UnlockExperimentalVMOptions</jvm-arg>  
+           <jvm-arg>-XX:+UseG1GC</jvm-arg>   
+           <jvm-arg>-XX:MaxGCPauseMillis=25</jvm-arg>  
+           <jvm-arg>-XX:GCPauseIntervalMillis=150</jvm-arg>   
+           <jvm-arg>-XX:SurvivorRatio=6</jvm-arg>   
+           <jvm-arg>-Xmx256m</jvm-arg>   
+           <jvm-arg>-Xms256m</jvm-arg>   
+           <jvm-arg>-Xss1m</jvm-arg>   
+           <jvm-arg>-XX:MaxPermSize=256m</jvm-arg> 
+           <jvm-arg>-Xloggc:${resin.root}/log/jdk_gc.log</jvm-arg>                                                                         <!-- 性能参数 end -->  
+        </server-default>   
+=============================JVM参数end=====================================

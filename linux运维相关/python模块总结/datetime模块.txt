@@ -1,0 +1,161 @@
+=======datetime模块==============
+包含的对象：
+    date -- 日期对象
+    datetime -- 日期时间对象
+    time -- 时间对象
+    timedelta -- 日期时间间隔对象
+    tzinfo -- 时区信息对象
+
+>>> dir(datetime.date)  
+['__add__', '__class__', '__delattr__', '__doc__', '__eq__', '__format__', '__ge  
+__', '__getattribute__', '__gt__', '__hash__', '__init__', '__le__', '__lt__', '  
+__ne__', '__new__', '__radd__', '__reduce__', '__reduce_ex__', '__repr__', '__rs  
+ub__', '__setattr__', '__sizeof__', '__str__', '__sub__', '__subclasshook__', 'c  
+time', 'day', 'fromordinal', 'fromtimestamp', 'isocalendar', 'isoformat', 'isowe  
+ekday', 'max', 'min', 'month', 'replace', 'resolution', 'strftime', 'timetuple',  
+ 'today', 'toordinal', 'weekday', 'year']  
+
+包含的数据：
+day -- 日号数值
+month -- 月份数值
+year -- 年份数值
+max = datetime.date(9999, 12, 31)-- 最大的年、月、日的数值
+min = datetime.date(1, 1, 1) -- 最小的年、月、日的数值
+resolution = datetime.timedelta(1) -- 时间间隔单位为1天
+
+包含的函数：
+date(year, month, day) -- 构造函数，接受年、月、日三个参数，返回一个date object
+ctime() -- 返回字符串格式的时间表示格式。不接受参数
+fromordinal() -- 接受一个整型的天数数值，返回一个天数所等价的年数、月数、日数的date对象。
+fromtimestamp() -- 接收一个浮点型的时间戳，返回一个从1970年起+时间戳的值对应的年、月、日的date对象。
+isocalendar() -- 返回一个ISO标准的日历形式的3元元组，分别代表ISO year, week number, and weekday，不接收参数
+isoformat() -- 返回一个ISO格式的日期字符串。格式为YYYY-MM-DD，不接收参数
+isoweekday() -- 返回一个ISO格式的周表示。Monday == 1 ... Sunday == 7，不接收参数
+replace() -- 返回一个替换指定日期字段的新date对象。参数3个可选参数，分别为year,month,day。注意替换是产生新对象，不影响原date对象。
+strftime() -- 返回一个格式化的字符串形式日期。接收一个format参数，如：'%Y-%d-%m'
+timetuple() -- 返回一个time的时间格式对象。等价于time.localtime()
+today() -- 返回当前date或datetime对象。等价于fromtimestamp(time.time())
+toordinal() -- 返回公元公历开始到现在的天数。公元1年1月1日为1
+weekday() -- 返回日期表示的周期。Monday == 0 ... Sunday == 6
+
+>>> dir(datetime.time)  
+['__class__', '__delattr__', '__doc__', '__eq__', '__format__', '__ge__', '__get  
+attribute__', '__gt__', '__hash__', '__init__', '__le__', '__lt__', '__ne__', '_  
+_new__', '__nonzero__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__'  
+, '__sizeof__', '__str__', '__subclasshook__', 'dst', 'hour', 'isoformat', 'max'  
+, 'microsecond', 'min', 'minute', 'replace', 'resolution', 'second', 'strftime',  
+ 'tzinfo', 'tzname', 'utcoffset'] 
+
+包含的数据：
+hour -- 小时表示数值
+microsecond -- 微秒表示数值
+minute -- 分钟表示数值
+second -- 秒表示数值
+tzinfo -- 时区表示数值
+max = datetime.time(23, 59, 59, 999999) -- 最大的时间表示数值
+min = datetime.time(0, 0)  -- 最小的时间表示数值
+resolution = datetime.timedelta(0, 0, 1) -- 时间间隔单位为分钟
+
+包含的函数：
+time([hour[, minute[, second[, microsecond[, tzinfo]]]]]) -- 构造函数，返回一个time对象。所有参数均为可选
+dst() -- 返回时区信息的描述。如果实例是没有tzinfo参数则返回空
+isoformat() -- 返回ISO 8601格式字符串, HH:MM:SS[.mmmmmm][+HH:MM].
+replace() -- 返回一个替换指定时间字段的新time对象。4个可选参数，分别为hour,minute,second,microsecond。注意替换是产生新对象，不影响原time对象。
+strftime() -- 接收一个format参数，返回一个对应格式的字符串。如:'%H:%M:%S'
+tzname() -- 返回时区的名称。如果实例是没有tzinfo参数则返回空
+utcoffset() -- 返回self.tzinfo.utcoffset(self)
+
+>>> dir(datetime.datetime)  
+['__add__', '__class__', '__delattr__', '__doc__', '__eq__', '__format__', '__ge  
+__', '__getattribute__', '__gt__', '__hash__', '__init__', '__le__', '__lt__', '  
+__ne__', '__new__', '__radd__', '__reduce__', '__reduce_ex__', '__repr__', '__rs  
+ub__', '__setattr__', '__sizeof__', '__str__', '__sub__', '__subclasshook__', 'a  
+stimezone', 'combine', 'ctime', 'date', 'day', 'dst', 'fromordinal', 'fromtimest  
+amp', 'hour', 'isocalendar', 'isoformat', 'isoweekday', 'max', 'microsecond', 'm  
+in', 'minute', 'month', 'now', 'replace', 'resolution', 'second', 'strftime', 's  
+trptime', 'time', 'timetuple', 'timetz', 'today', 'toordinal', 'tzinfo', 'tzname  
+', 'utcfromtimestamp', 'utcnow', 'utcoffset', 'utctimetuple', 'weekday', 'year']  
+
+继承自date的数据：
+day
+month
+year
+
+继承自date的函数：
+fromordinal(...)
+isocalendar(...)
+isoweekday(...)
+strftime(...)
+today(...)
+toordinal(...)
+weekday(...)
+
+包含的数据：
+hour
+microsecond
+minute
+second
+tzinfo
+max = datetime.datetime(9999, 12, 31, 23, 59, 59, 999999)
+min = datetime.datetime(1, 1, 1, 0, 0)
+resolution = datetime.timedelta(0, 0, 1)
+
+包含的函数：
+datetime(year, month, day[, hour[, minute[, second[, microsecond[,tzinfo]]]]])  -- 构造函数，返回一个datetime对象。year, month, day为必选参数
+astimezone(...) -- 根据给定的timezone对象，返回转换为本地时区的timezone对象。
+combine(...) -- 根据给定date, time对象合并后，返回一个对应值的datetime对象。
+ctime(...) -- 返回ctime格式的字符串。
+date(...) -- 返回具有相同year, month, day的date对象
+dst(...) -- 返回self.tzinfo.dst(self).
+fromtimestamp(...) -- 根据时间戳数值，返回一个datetime对象。
+isoformat(...) -- 返回ISO 8601格式的字符串,如：YYYY-MM-DDTHH:MM:SS[.mmmmmm][+HH:MM]
+now(...) -- 根据给定的时区，返回当地的当前时间。
+replace(...) -- 返回一个替换了指定日期时间字段的新datetime对象
+strptime(...) -- 根据string, format2个参数，返回一个对应的datetime对象。
+time(...) -- 返回一个带有相同time，但没有tzinfo的time对象。
+timetuple(...) -- 返回一个时间元素, 等价于time.localtime().
+timetz(...) -- 返回一个带有相同time和tzinfo的time对象。 
+tzname(...) -- 返回self.tzinfo.tzname(self).
+utcfromtimestamp(...) -- 返回UTC时间戳的datetime对象，时间戳值为time.time()
+utcnow(...) -- 返回UTC当前时间的datetime对象.
+utcoffset(...) -- Return self.tzinfo.utcoffset(self).
+utctimetuple(...) -- 返回UTC时间元组对象, 等价于time.localtime().
+
+说明：
+datetime.time对象调用了time模块的基础方法。并封装之。
+datetime.date对象同样调用了time模块的基础方法，并封装之。
+datetime.datetime对象继承了datetime.date类，并调用了time模块的方法。
+
+>>> dir(timedelta)  
+['__abs__', '__add__', '__class__', '__delattr__', '__div__', '__doc__', '__eq__  
+', '__floordiv__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash  
+__', '__init__', '__le__', '__lt__', '__mul__', '__ne__', '__neg__', '__new__',  
+'__nonzero__', '__pos__', '__radd__', '__rdiv__', '__reduce__', '__reduce_ex__',  
+ '__repr__', '__rfloordiv__', '__rmul__', '__rsub__', '__setattr__', '__sizeof__  
+', '__str__', '__sub__', '__subclasshook__', 'days', 'max', 'microseconds', 'min  
+', 'resolution', 'seconds', 'total_seconds']  
+
+包含的数据：
+days -- 天数
+microseconds -- 微秒数(>= 0 and less than 1 second).
+seconds -- 秒数 (>= 0 and less than 1 day).
+
+max = datetime.timedelta(999999999, 86399, 999999)
+min = datetime.timedelta(-999999999)
+resolution = datetime.timedelta(0, 0, 1)
+ 
+包含的函数：
+timedelta() -- 构造函数，接收3个参数，天、秒、微秒
+total_seconds() -- 时间间隔的总秒数
+
+#!/usr/bin/env python  
+# -*- coding:utf-8 -*-  
+  
+from datetime import datetime,timedelta  
+  
+now = datetime.now()  
+  
+yestoday = now - timedelta(days=1)  
+tommorow = now + timedelta(days=1)  
+  
+next_year = now + timedelta(days = 365) 

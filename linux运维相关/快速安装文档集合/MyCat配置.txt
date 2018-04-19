@@ -1,0 +1,12 @@
+ERROR  | wrapper  | 2017/03/06 21:18:02 | JVM exited while loading the application.
+INFO   | jvm 5    | 2017/03/06 21:18:02 | Java HotSpot(TM) Server VM warning: ignoring option MaxPermSize=64M; support was removed in 8.0
+INFO   | jvm 5    | 2017/03/06 21:18:02 | Invalid maximum heap size: -Xmx4G
+
+以下配置作废：
+
+wrapper.java.initmemory=3
+wrapper.java.maxmemory=64
+启动时报错，修改MyCat配置文件，将这行参数注释掉。便可以顺利启动。
+
+
+
